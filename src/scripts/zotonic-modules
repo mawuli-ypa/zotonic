@@ -42,10 +42,7 @@ BASE_MODULE_PATH = os.path.join(os.environ['ZOTONIC'], 'modules')
 class ZMM():
     """
     Class for holding all Zotonic module related functions
-    """
-    # How long should ZMM  run if there's a problem such as  poor internet connection.
-    timeout = 60
-    
+    """    
     def __init__(self):
         # help message
        self. __help_message__ = """zmm %s for Zotonic built on %s.
@@ -54,37 +51,48 @@ class ZMM():
         zmm [options] activate module1 [module2 ...]
     """ % (__version__, __last_modified__)
 
-    def install(self):
+    def install(self, modules):
+        """ Install modules """
         pass
 
-    def uninstall(self):
+    def uninstall(self, modules):
+        """ Uninstall modules """
         pass
    
     def activate(self):
+        """ Install modules"""
         pass
 
-    def deactivate(self):
+    def deactivate(self,modules):
+        """" Deactive modules"""
         pass
 
-    def freeze(self):
+    def freeze(self,site):
+        """ Write the list of installed modules into a file for use later """
         pass
 
-    def bundle(self):
+    def bundle(self,site):
+        """" Bundle all modules into a zip file """
         pass
 
-    def info(self):
+    def info(self,modules,modules):
+        """" Dsplay information about a module """
         pass
 
-    def search(self):
+    def search(self, title, category=None, compatibility_version=None):
+        """ Serach for modules, and filter by category or Zotonic compatibility version"""
         pass
 
-    def update(self):
+    def update(self,modules):
+        """ Update all installed moules """
         pass
 
     def list(self):
+        """" List all modules hosted at modules.zotonic.com"""
         pass
 
     def tests(self):
+        """ Conduct unit tests on ZMM """
         pass
 
 if __name__ == "__main__":
@@ -96,11 +104,15 @@ if __name__ == "__main__":
                       default=True, action='store_false')
     parser.add_option('-p','--path', help='modules install path. defaults to priv/modules', 
                       dest='path', default = INSTALL_PATH)
-    parser.add_option("-s", "--site", help="Repository site", 
+    parser.add_option("-a", "--api", help="Remote repository API", 
                       default='modules.zotonic.com')   
-    parser.add_option("-t", "--timeout", help="Timeout(in seconds) for executing task", default=60)   
+    parser.add_option("-s", "--site", help="Site affected by the command", 
+                      default='global')   
+#    parser.add_option("-t", "--timeout", help="Timeout(in seconds) for executing task", default=60)   
+    parser.add_option('-u','--url', help="Link to directly clone/download module", action='store')
+    parser.add_option('-t','--type', help="Format in which module is saved. Options include git, hg, zip", action='store', default='git')
 
     (opts, args) = parser.parse_args()
     if not args:
         parser.print_help()
-        exit(1)
+        exit(-1)
