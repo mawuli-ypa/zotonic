@@ -24,7 +24,7 @@ __last_modified__ = "July 4th, 2013"
 
 import os
 import sys
-import httplib
+import requests
 import re
 from urlparse import urlparse
 from optparse import OptionParser
