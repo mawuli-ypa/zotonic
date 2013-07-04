@@ -84,7 +84,16 @@ class ZMM():
         pass
 
     def update(self,modules):
-        """ Update all installed moules """
+        """ Update the Zotonic codebase """
+        pass
+
+    def upgrade(self,modules):
+        """ Update modules """
+        pass
+
+
+    def restart(self,modules):
+        """ Restart modules """
         pass
 
     def list(self):
