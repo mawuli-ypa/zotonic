@@ -18,6 +18,10 @@
 # Zotonic CLI for managing modules. Modules are by default pulled from modules.zotonic.com
 #
 
+# version
+
+__version__ = "0.1.0"
+
 import os
 import sys
 import httplib
@@ -31,3 +35,51 @@ except ImportError:
 
 INSTALL_PATH = os.path.join(os.environ['ZOTONIC'], 'priv/modules')
 BASE_MODULE_PATH = os.path.join(os.environ['ZOTONIC'], 'modules')
+
+# print "Hello, World!"
+
+class ZMM():
+    """
+    Class for holding all Zotonic module related functions
+    """
+    # How long should ZMM  run if there's a problem such as  poor internet connection.
+    timeout = 60
+
+    def __init__(self):
+        pass
+
+    def help(self):
+        pass
+
+    def install(self):
+        pass
+
+    def uninstall(self):
+        pass
+   
+    def activate(self):
+        pass
+
+    def deactivate(self):
+        pass
+
+    def freeze(self):
+        pass
+
+    def bundle(self):
+        pass
+
+    def info(self):
+        pass
+
+    def search(self):
+        pass
+
+    def update(self):
+        pass
+
+    def list(self):
+        pass
+
+    def tests(self):
+        pass
