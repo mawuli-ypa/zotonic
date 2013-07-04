@@ -54,11 +54,6 @@ class ZMM():
         zmm [options] activate module1 [module2 ...]
     """ % (__version__, __last_modified__)
 
-
-    def help(self):
-        print self.__help_message__
-        pass
-
     def install(self):
         pass
 
