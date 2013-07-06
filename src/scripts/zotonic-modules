@@ -34,15 +34,14 @@ try:
 except ImportError:
     import simplejson as json
 
-INSTALL_PATH = os.path.join(os.environ['ZOTONIC'], 'priv/modules')
-BASE_MODULE_PATH = os.path.join(os.environ['ZOTONIC'], 'modules')
-
 class ZMM():
     """
     Class for holding all Zotonic module related functions
     """    
     ZMR_SERVER = 'http://gsoc:8200/api/zmr/repositories?'
-
+    INSTALL_PATH = os.path.join(os.environ['ZOTONIC'], 'priv/modules')
+    BASE_MODULE_PATH = os.path.join(os.environ['ZOTONIC'], 'modules')
+    
     def __init__(self):
         # help message
        self. __help_message__ = """zmm %s for Zotonic built on %s.
@@ -53,9 +52,45 @@ class ZMM():
 
     def install(self, modules):
         """ Install modules """
-        
-        pass
+        if not re.match("^mod_[a-z_]+$", modulename):
+            # fixme - valid module name
+            print "** Invalid module name:", modulename
+            return False
+    
+        info  = [mod for mod in modules if mod['title'] == modulename]
+        if not info:
+            print "** Module not found:", modulename
+            return False
+        info = info[0]
 
+        clonepath = os.path.join(ZMM.INSTALL_PATH, modulename)
+        if os.path.exists(clonepath):
+            print "** Target path already exists:", clonepath
+            return False
+
+        if os.path.exists(os.path.join(ZMM.BASE_MODULE_PATH, modulename)):
+            print "** Module already exists in zotonic core:", clonepath
+            return False
+
+        if not info["repository"] or not urlparse(info["repository"])[0]: # check on URL scheme
+            # todo - check on valid URL
+            print "** Module has no valid repository URL"
+            return False
+
+        if info["scm"] not in ["hg", "git"]:
+            print "** Module has unsupported/unknown SCM:", scmcmd
+            return False
+
+        print "** Installing", modulename,"..."
+
+        cmd = "%s clone %s %s" % (info["scm"], info["repository"], clonepath)
+        code, signal = divmod(os.system(cmd), 1<<8)
+        if code != 0:
+            return False
+        else:
+            print "**", modulename, "OK"
+            return True
+        
     def uninstall(self, modules):
         """ Uninstall modules """
         pass
@@ -76,10 +111,6 @@ class ZMM():
         """ Bundle all modules into a zip file """
         pass
 
-    def info(self,modules):
-        """ Dsplay information about a module """
-        pass
-
     def search(self, title=None, category=None):
         """ Search for modules, and filter by category or Zotonic compatibility version"""
         def get_query_args(title, category):
@@ -90,6 +121,7 @@ class ZMM():
             elif category and title:
                 return {'category': category, 'title': title}
 
+        print "Getting module index"
         try:
             modules = json.loads(requests.get(ZMM.ZMR_SERVER,
                                               params=get_query_args(title, category)).content)
@@ -106,10 +138,6 @@ class ZMM():
         """ Restart modules """
         pass
 
-    def tests(self):
-        """ Conduct unit tests on ZMM """
-        pass
-
 if __name__ == "__main__":
     zmm = ZMM()
     parser = OptionParser(usage=zmm.__help_message__)
@@ -118,7 +146,7 @@ if __name__ == "__main__":
     parser.add_option('-f','--force', help="Ignore errors, and finish task", dest='verbose', 
                       default=True, action='store_false')
     parser.add_option('-p','--path', help='modules install path. defaults to priv/modules', 
-                      dest='path', default = INSTALL_PATH)
+                      dest='path', default = ZMM.INSTALL_PATH)
     parser.add_option("-a", "--api", help="Remote repository API", dest='api',
                       default=ZMM.ZMR_SERVER)   
     parser.add_option("-s", "--site", help="Site affected by the command", 
@@ -149,13 +177,9 @@ if __name__ == "__main__":
         pass
     elif command == 'bundle' :
         pass
-    elif command == 'info' :
-        pass
     elif command == 'restart':
         pass
     elif command == 'list':
         zmm.search()
-    elif command == 'tests' :
-        pass
     else:
         parser.print_help()
