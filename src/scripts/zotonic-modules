@@ -158,5 +158,4 @@ if __name__ == "__main__":
     elif command == 'tests' :
         pass
     else:
-        pass
-        # parser.print_help()
+        parser.print_help()
