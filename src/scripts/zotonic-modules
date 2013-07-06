@@ -37,12 +37,12 @@ except ImportError:
 INSTALL_PATH = os.path.join(os.environ['ZOTONIC'], 'priv/modules')
 BASE_MODULE_PATH = os.path.join(os.environ['ZOTONIC'], 'modules')
 
-# print "Hello, World!"
-
 class ZMM():
     """
     Class for holding all Zotonic module related functions
     """    
+    ZMR_SERVER = 'http://gsoc:8200/api/zmr/repositories?'
+
     def __init__(self):
         # help message
        self. __help_message__ = """zmm %s for Zotonic built on %s.
@@ -53,6 +53,7 @@ class ZMM():
 
     def install(self, modules):
         """ Install modules """
+        
         pass
 
     def uninstall(self, modules):
@@ -64,7 +65,7 @@ class ZMM():
         pass
 
     def deactivate(self,modules):
-        """" Deactive modules"""
+        """ Deactive modules"""
         pass
 
     def freeze(self,site):
@@ -72,32 +73,37 @@ class ZMM():
         pass
 
     def bundle(self,site):
-        """" Bundle all modules into a zip file """
+        """ Bundle all modules into a zip file """
         pass
 
-    def info(self,modules,modules):
-        """" Dsplay information about a module """
+    def info(self,modules):
+        """ Dsplay information about a module """
         pass
 
-    def search(self, title, category=None, compatibility_version=None):
-        """ Serach for modules, and filter by category or Zotonic compatibility version"""
-        pass
+    def search(self, title=None, category=None):
+        """ Search for modules, and filter by category or Zotonic compatibility version"""
+        def get_query_args(title, category):
+            if category and not title:
+                return {'category':'category'}
+            elif title and not category:        
+                return {'title': title}
+            elif category and title:
+                return {'category': category, 'title': title}
 
-    def update(self,modules):
-        """ Update the Zotonic codebase """
-        pass
+        try:
+            modules = json.loads(requests.get(ZMM.ZMR_SERVER,
+                                              params=get_query_args(title, category)).content)
+            table = [[module['title'], module['category'], module['repository']] for module in modules]
+            from tabulate import tabulate
+            headers =  ["Module", "Category", "Repository"]
+            print tabulate(table,headers,tablefmt="simple")
+        except:
+            print "Parse error while getting module list from " + ZMM.ZMR_SERVER
+            exit(2)
 
-    def upgrade(self,modules):
-        """ Update modules """
-        pass
 
-
-    def restart(self,modules):
+    def restart(self,site, modules):
         """ Restart modules """
-        pass
-
-    def list(self):
-        """" List all modules hosted at modules.zotonic.com"""
         pass
 
     def tests(self):
@@ -113,8 +119,8 @@ if __name__ == "__main__":
                       default=True, action='store_false')
     parser.add_option('-p','--path', help='modules install path. defaults to priv/modules', 
                       dest='path', default = INSTALL_PATH)
-    parser.add_option("-a", "--api", help="Remote repository API", 
-                      default='modules.zotonic.com')   
+    parser.add_option("-a", "--api", help="Remote repository API", dest='api',
+                      default=ZMM.ZMR_SERVER)   
     parser.add_option("-s", "--site", help="Site affected by the command", 
                       default='global')   
 #    parser.add_option("-t", "--timeout", help="Timeout(in seconds) for executing task", default=60)   
@@ -125,3 +131,32 @@ if __name__ == "__main__":
     if not args:
         parser.print_help()
         exit(-1)
+    command = args[0] 
+    command_args = args[1:]
+    if command == 'search':
+        title = command_args[0] if command_args else None
+        category = command_args[1] if len(command_args) > 1 else None
+        zmm.search(title, category)
+    elif command == 'activate' :
+        pass
+    elif command == 'deactivate' :
+        pass
+    elif command == 'install' :
+        pass
+    elif command == 'uninstall' :
+        pass
+    elif command == 'freeze' :
+        pass
+    elif command == 'bundle' :
+        pass
+    elif command == 'info' :
+        pass
+    elif command == 'restart':
+        pass
+    elif command == 'list':
+        zmm.search()
+    elif command == 'tests' :
+        pass
+    else:
+        pass
+        # parser.print_help()
