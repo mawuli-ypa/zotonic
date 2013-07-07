@@ -194,7 +194,7 @@ if __name__ == "__main__":
         exit(-1)
     command = args[0] 
     command_args = args[1:]
-    if command == 'search':
+    if command in ['list','search']:
         title = command_args[0] if command_args else None
         category = command_args[1] if len(command_args) > 1 else None        
         modules = zmm.search(title, category)
@@ -228,7 +228,5 @@ if __name__ == "__main__":
         pass
     elif command == 'restart':
         pass
-    elif command == 'list':
-        zmm.search()
     else:
         parser.print_help()
