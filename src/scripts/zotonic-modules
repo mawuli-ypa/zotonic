@@ -40,21 +40,21 @@ class ZMM():
     """
     Class for holding all Zotonic module related functions
     """    
-    __ZMR_SERVER = 'http://gsoc:8200/api/zmr/repositories?'
-    __INSTALL_PATH = os.path.join(os.environ['ZOTONIC'], 'priv/modules')
+    ZMR_SERVER = 'http://gsoc:8200/api/zmr/repositories?'
+    INSTALL_PATH = os.path.join(os.environ['ZOTONIC'], 'priv/modules')
     __BASE_MODULE_PATH = os.path.join(os.environ['ZOTONIC'], 'modules')
     __SUPPORTED_SCMS =  ["hg", "git"]
 
     def __init__(self):
         # help message
-       self. __help_message__ = """zmm %s for Zotonic built on %s.
+       self.USAGE = """zmm %s for Zotonic built on %s.
        Usage: zmm [OPTIONS] COMMAND
         zmm [options] install|remove module1, [module2 ...]
         zmm [options] activate module1 [module2 ...]
     """ % (__version__, __last_modified__)
 
     def install(self, modulename, direct_link = False):
-                """ Install modules. """
+        """ Install modules. """
         if not re.match("^mod_[a-z_]+$", modulename):
             # fixme - valid module name
             print "** Invalid module name:", modulename
@@ -81,7 +81,7 @@ class ZMM():
         if direct_link.ends_with('.zip'):
             r = requests.get(direct_link)
             if r.ok:
-                extract_path = os.path.join(ZMM.__INSTALL_PATH, module_name)
+                extract_path = os.path.join(ZMM.INHSTALL_PATH, module_name)
                 try:
                     z = zipfile.ZipFile(StringIO(r.content))
                     z.extractall(extract_path)
@@ -98,7 +98,7 @@ class ZMM():
 
 
     def __clone_repo(modulename, repository, scm):
-        clonepath = os.path.join(ZMM.__INSTALL_PATH, modulename)
+        clonepath = os.path.join(ZMM.INSTALL_PATH, modulename)
         if os.path.exists(clonepath):
             print "** Target path already exists:", clonepath
             return False
@@ -109,8 +109,7 @@ class ZMM():
 
         if repository:  
             pieces = urlparse(repository)
-            if  not all(pieces.scheme, pieces.netloc) or 
-            pieces.scheme not in ['http', 'https', 'git', 'ssh']: # check on URL scheme and validate url
+            if  not all(pieces.scheme, pieces.netloc) or pieces.scheme not in ['http', 'https', 'git', 'ssh']: # check on URL scheme and validate url
                 print "** Module has no valid repository URL"
                 return False
 
@@ -160,11 +159,11 @@ class ZMM():
 
         print "Getting module index"
         try:
-            modules = json.loads(requests.get(ZMM.__ZMR_SERVER,
+            modules = json.loads(requests.get(ZMM.ZMR_SERVER,
                                               params=get_query_args(title, category)).content)
             return modules
         except:
-            print "Parse error while getting module list from " + ZMM.__ZMR_SERVER
+            print "Parse error while getting module list from " + ZMM.ZMR_SERVER
             exit(2)
 
 
@@ -174,15 +173,15 @@ class ZMM():
 
 if __name__ == "__main__":
     zmm = ZMM()
-    parser = OptionParser(usage=zmm.__help_message__)
+    parser = OptionParser(usage=zmm.USAGE)
     parser.add_option('-q','--quiet', help="Disable verbose output mode", dest='verbose', 
                       default=True, action='store_false')
     parser.add_option('-f','--force', help="Ignore errors, and finish task", dest='verbose', 
                       default=True, action='store_false')
     parser.add_option('-p','--path', help='modules install path. defaults to priv/modules', 
-                      dest='path', default = ZMM.__INSTALL_PATH)
+                      dest='path', default=ZMM.INSTALL_PATH )
     parser.add_option("-a", "--api", help="Remote repository API", dest='api',
-                      default=ZMM.__ZMR_SERVER)   
+                      default=ZMM.ZMR_SERVER)   
     parser.add_option("-s", "--site", help="Site affected by the command", 
                       default='global')   
 #    parser.add_option("-t", "--timeout", help="Timeout(in seconds) for executing task", default=60)   
@@ -218,7 +217,7 @@ if __name__ == "__main__":
         module_repository_url = args.url if args.url else None  
         # adjust the install path if a custom install path is given
         if args.path and os.path.exists(args.path):
-            ZMM.__INSTALL_PATH = args.path
+            ZMM.INSTALL_PATH = args.path
         zmm.install(modulename,module_repository_url)
 
     elif command == 'uninstall' :
