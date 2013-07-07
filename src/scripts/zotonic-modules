@@ -38,10 +38,11 @@ class ZMM():
     """
     Class for holding all Zotonic module related functions
     """    
-    ZMR_SERVER = 'http://gsoc:8200/api/zmr/repositories?'
-    INSTALL_PATH = os.path.join(os.environ['ZOTONIC'], 'priv/modules')
-    BASE_MODULE_PATH = os.path.join(os.environ['ZOTONIC'], 'modules')
-    
+    __ZMR_SERVER = 'http://gsoc:8200/api/zmr/repositories?'
+    __INSTALL_PATH = os.path.join(os.environ['ZOTONIC'], 'priv/modules')
+    __BASE_MODULE_PATH = os.path.join(os.environ['ZOTONIC'], 'modules')
+    __SUPPORTED_SCMS =  ["hg", "git"]
+
     def __init__(self):
         # help message
        self. __help_message__ = """zmm %s for Zotonic built on %s.
@@ -50,47 +51,9 @@ class ZMM():
         zmm [options] activate module1 [module2 ...]
     """ % (__version__, __last_modified__)
 
-    def install(self, modules):
-        """ Install modules """
-        if not re.match("^mod_[a-z_]+$", modulename):
-            # fixme - valid module name
-            print "** Invalid module name:", modulename
-            return False
-    
-        info  = [mod for mod in modules if mod['title'] == modulename]
-        if not info:
-            print "** Module not found:", modulename
-            return False
-        info = info[0]
+    def install(self, modulename, direct_link = False, install_path=None):
+        pass
 
-        clonepath = os.path.join(ZMM.INSTALL_PATH, modulename)
-        if os.path.exists(clonepath):
-            print "** Target path already exists:", clonepath
-            return False
-
-        if os.path.exists(os.path.join(ZMM.BASE_MODULE_PATH, modulename)):
-            print "** Module already exists in zotonic core:", clonepath
-            return False
-
-        if not info["repository"] or not urlparse(info["repository"])[0]: # check on URL scheme
-            # todo - check on valid URL
-            print "** Module has no valid repository URL"
-            return False
-
-        if info["scm"] not in ["hg", "git"]:
-            print "** Module has unsupported/unknown SCM:", scmcmd
-            return False
-
-        print "** Installing", modulename,"..."
-
-        cmd = "%s clone %s %s" % (info["scm"], info["repository"], clonepath)
-        code, signal = divmod(os.system(cmd), 1<<8)
-        if code != 0:
-            return False
-        else:
-            print "**", modulename, "OK"
-            return True
-        
     def uninstall(self, modules):
         """ Uninstall modules """
         pass
@@ -123,11 +86,11 @@ class ZMM():
 
         print "Getting module index"
         try:
-            modules = json.loads(requests.get(ZMM.ZMR_SERVER,
+            modules = json.loads(requests.get(ZMM.__ZMR_SERVER,
                                               params=get_query_args(title, category)).content)
             return modules
         except:
-            print "Parse error while getting module list from " + ZMM.ZMR_SERVER
+            print "Parse error while getting module list from " + ZMM.__ZMR_SERVER
             exit(2)
 
 
@@ -143,9 +106,9 @@ if __name__ == "__main__":
     parser.add_option('-f','--force', help="Ignore errors, and finish task", dest='verbose', 
                       default=True, action='store_false')
     parser.add_option('-p','--path', help='modules install path. defaults to priv/modules', 
-                      dest='path', default = ZMM.INSTALL_PATH)
+                      dest='path', default = ZMM.__INSTALL_PATH)
     parser.add_option("-a", "--api", help="Remote repository API", dest='api',
-                      default=ZMM.ZMR_SERVER)   
+                      default=ZMM.__ZMR_SERVER)   
     parser.add_option("-s", "--site", help="Site affected by the command", 
                       default='global')   
 #    parser.add_option("-t", "--timeout", help="Timeout(in seconds) for executing task", default=60)   
