@@ -29,6 +29,7 @@ import re
 from urlparse import urlparse
 from optparse import OptionParser
 import zipfile
+from StringIO import StringIO
 
 try:
     import json
