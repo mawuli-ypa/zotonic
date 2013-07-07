@@ -76,7 +76,8 @@ class ZMM():
                 return True
 
     def __direct_download(self, modulename, download_link):
-        # use case: zmm install mod_abc --url https://github.com/zotonic/mod_abc
+        # use case 1: zmm install mod_abc --url https://github.com/zotonic/mod_abc
+        # use case 2: zmm install mod_abc -r requirements.txt
         # link is a zip file
         if download_link.endswith('.zip'):
             print "*** Downloaidng %s from %s " % (modulename, download_link)
