@@ -54,6 +54,37 @@ class ZMM():
     def install(self, modulename, direct_link = False, install_path=None):
         pass
 
+    def __clone_repo(modulename, repository, scm):
+        clonepath = os.path.join(ZMM.__INSTALL_PATH, modulename)
+        if os.path.exists(clonepath):
+            print "** Target path already exists:", clonepath
+            return False
+
+        if os.path.exists(os.path.join(ZMM.__BASE_MODULE_PATH, modulename)):
+            print "** Module already exists in zotonic core:", clonepath
+            return False
+
+        if repository:  
+            pieces = urlparse(repository)
+            if  not all(pieces.scheme, pieces.netloc) or 
+            pieces.scheme not in ['http', 'https', 'git', 'ssh']: # check on URL scheme and validate url
+                print "** Module has no valid repository URL"
+                return False
+
+        if scm not in ZMM.__SUPPORTED_SCMS:
+            print "** Module has unsupported/unknown SCM: %s", scm
+            return False
+
+        print "** Installing", modulename,"..."
+
+        cmd = "%s clone %s %s" % (scm, repository, clonepath)
+        code, signal = divmod(os.system(cmd), 1<<8)
+        if code != 0:
+            return False
+        else:
+            print "** Module has no valid repository URL"
+            return False
+
     def uninstall(self, modules):
         """ Uninstall modules """
         pass
