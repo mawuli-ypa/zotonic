@@ -125,10 +125,7 @@ class ZMM():
         try:
             modules = json.loads(requests.get(ZMM.ZMR_SERVER,
                                               params=get_query_args(title, category)).content)
-            table = [[module['title'], module['category'], module['repository']] for module in modules]
-            from tabulate import tabulate
-            headers =  ["Module", "Category", "Repository"]
-            print tabulate(table,headers,tablefmt="simple")
+            return modules
         except:
             print "Parse error while getting module list from " + ZMM.ZMR_SERVER
             exit(2)
@@ -163,8 +160,14 @@ if __name__ == "__main__":
     command_args = args[1:]
     if command == 'search':
         title = command_args[0] if command_args else None
-        category = command_args[1] if len(command_args) > 1 else None
-        zmm.search(title, category)
+        category = command_args[1] if len(command_args) > 1 else None        
+        modules = zmm.search(title, category)
+        table = [[module['title'], module['category'], module['repository']] for module in modules]
+ 
+        from tabulate import tabulate
+        headers =  ["Module", "Category", "Repository"]
+        print tabulate(table,headers,tablefmt="simple")
+
     elif command == 'activate' :
         pass
     elif command == 'deactivate' :
