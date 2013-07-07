@@ -206,12 +206,17 @@ if __name__ == "__main__":
         pass
     elif command == 'deactivate' :
         pass
-    elif command == 'install' :
+    elif command == 'install':
+        modulename = command_args[0] if command_args[0] else None
+        if not modulename:
+            parser.print_help()
+            exit(1)
+
+        module_repository_url = args.url if args.url else None  
         # adjust the install path if a custom install path is given
         if args.path and os.path.exists(args.path):
             ZMM.__INSTALL_PATH = args.path
-
-        zmm.install()
+        zmm.install(modulename,module_repository_url)
 
     elif command == 'uninstall' :
         pass
