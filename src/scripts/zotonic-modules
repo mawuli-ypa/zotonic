@@ -61,25 +61,7 @@ class ZMM():
             return False
 
         if direct_link:
-            # use case: zmm install mod_abc --url https://github.com/zotonic/mod_abc
-            # link is a zip file
-            if direct_link.ends_with('.zip'):
-                r = requests.get(direct_link)
-                if r.ok:
-                    extract_path = os.path.join(ZMM.__INSTALL_PATH, module_name)
-                    try:
-                        z = zipfile.ZipFile(StringIO(r.content))
-                        z.extractall(extract_path)
-                    except:
-                        print "*** Error extracting %s to %s" % (modulename, extract_path)
-                        exit(2)
-            else: # non-zip file link
-                # todo: how to detect SCM given only the remote repository link
-            for scm in ZMM.__SUPPORTED_SCMS:
-                # clone repository
-                if self.__clone_repo(repository, scm):
-                    print "**", modulename, "OK"
-                    return True
+            self.__direct_download(module_name)
         else:    
             # todo: improve mod_zmr service search by matching against module title.
             info  = [mod for mod in self.search() if mod['title'] == modulename]
@@ -92,6 +74,27 @@ class ZMM():
             if self.__clone_repo(info['repository'], info['scm']):
                 print "**", modulename, "OK"
                 return True
+
+    def __direct_download(modulename):
+        # use case: zmm install mod_abc --url https://github.com/zotonic/mod_abc
+        # link is a zip file
+        if direct_link.ends_with('.zip'):
+            r = requests.get(direct_link)
+            if r.ok:
+                extract_path = os.path.join(ZMM.__INSTALL_PATH, module_name)
+                try:
+                    z = zipfile.ZipFile(StringIO(r.content))
+                    z.extractall(extract_path)
+                except:
+                    print "*** Error extracting %s to %s" % (modulename, extract_path)
+                    exit(2)
+        else: # non-zip file link
+            # todo: how to detect SCM given only the remote repository link
+            for scm in ZMM.__SUPPORTED_SCMS:
+                # clone repository
+                if self.__clone_repo(repository, scm):
+                    print "**", modulename, "OK"
+                    return True
 
 
     def __clone_repo(modulename, repository, scm):
