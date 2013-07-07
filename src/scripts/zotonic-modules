@@ -61,7 +61,7 @@ class ZMM():
             return False
 
         if direct_link:
-            self.__direct_download(module_name, direct_link)
+            self.__direct_download(modulename, direct_link)
         else:    
             # todo: improve mod_zmr service search by matching against module title.
             info  = [mod for mod in self.search()  if mod['title'] == modulename]
@@ -71,15 +71,16 @@ class ZMM():
             info = info[0]
             
             # clone repository now
-            if self.__clone_repo(info['repository'], info['scm']):
+            if self.__clone_repo(modulename, info['repository'], info['scm']):
                 print "**", modulename, "OK"
                 return True
 
-    def __direct_download(modulename, direct_download_link):
+    def __direct_download(self, modulename, download_link):
         # use case: zmm install mod_abc --url https://github.com/zotonic/mod_abc
         # link is a zip file
-        if direct_link.ends_with('.zip'):
-            r = requests.get(direct_link)
+        if download_link.endswith('.zip'):
+            print "*** Downloaidng %s from %s " % (modulename, download_link)
+            r = requests.get(download_link)
             if r.ok:
                 extract_path = os.path.join(ZMM.INHSTALL_PATH, module_name)
                 try:
@@ -92,12 +93,12 @@ class ZMM():
             # todo: how to detect SCM given only the remote repository link
             for scm in ZMM.__SUPPORTED_SCMS:
                 # clone repository
-                if self.__clone_repo(repository, scm):
-                    print "**", modulename, "OK"
+                if self.__clone_repo(modulename,download_link, scm):
+                    print "***", modulename, "OK"
                     return True
 
 
-    def __clone_repo(modulename, repository, scm):
+    def __clone_repo(self, modulename, repository, scm):
         clonepath = os.path.join(ZMM.INSTALL_PATH, modulename)
         if os.path.exists(clonepath):
             print "** Target path already exists:", clonepath
@@ -109,7 +110,7 @@ class ZMM():
 
         if repository:  
             pieces = urlparse(repository)
-            if  not all(pieces.scheme, pieces.netloc) or pieces.scheme not in ['http', 'https', 'git', 'ssh']: # check on URL scheme and validate url
+            if  not all([pieces.scheme, pieces.netloc]) or pieces.scheme not in ['http', 'https', 'git', 'ssh']: # check on URL scheme and validate url
                 print "** Module has no valid repository URL"
                 return False
 
@@ -124,8 +125,7 @@ class ZMM():
         if code != 0:
             return False
         else:
-            print "** Module has no valid repository URL"
-            return False
+            return True
 
     def uninstall(self, modules):
         """ Uninstall modules """
