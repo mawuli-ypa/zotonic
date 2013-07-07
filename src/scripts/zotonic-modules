@@ -64,7 +64,7 @@ class ZMM():
             self.__direct_download(module_name, direct_link)
         else:    
             # todo: improve mod_zmr service search by matching against module title.
-            info  = [mod for mod in self.search() if mod['title'] == modulename]
+            info  = [mod for mod in self.search()  if mod['title'] == modulename]
             if not info:
                 print "** Module not found:", modulename
                 return False
@@ -209,15 +209,17 @@ if __name__ == "__main__":
     elif command == 'deactivate' :
         pass
     elif command == 'install':
+        #print "***OPTS: "
+        #print opts
         modulename = command_args[0] if command_args[0] else None
         if not modulename:
             parser.print_help()
             exit(1)
 
-        module_repository_url = args.url if args.url else None  
+        module_repository_url = opts.url if opts.url else None  
         # adjust the install path if a custom install path is given
-        if args.path and os.path.exists(args.path):
-            ZMM.INSTALL_PATH = args.path
+        if opts.path and os.path.exists(opts.path):
+            ZMM.INSTALL_PATH = opts.path
         zmm.install(modulename,module_repository_url)
 
     elif command == 'uninstall' :
