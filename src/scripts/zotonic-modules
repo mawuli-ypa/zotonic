@@ -61,7 +61,7 @@ class ZMM():
             return False
 
         if direct_link:
-            self.__direct_download(module_name)
+            self.__direct_download(module_name, direct_link)
         else:    
             # todo: improve mod_zmr service search by matching against module title.
             info  = [mod for mod in self.search() if mod['title'] == modulename]
@@ -75,7 +75,7 @@ class ZMM():
                 print "**", modulename, "OK"
                 return True
 
-    def __direct_download(modulename):
+    def __direct_download(modulename, direct_download_link):
         # use case: zmm install mod_abc --url https://github.com/zotonic/mod_abc
         # link is a zip file
         if direct_link.ends_with('.zip'):
