@@ -53,16 +53,12 @@ class ZMM():
         zmm [options] activate module1 [module2 ...]
     """ % (__version__, __last_modified__)
 
-    def install(self, modulename, direct_link = False, install_path=None):
+    def install(self, modulename, direct_link = False):
                 """ Install modules. """
         if not re.match("^mod_[a-z_]+$", modulename):
             # fixme - valid module name
             print "** Invalid module name:", modulename
             return False
-
-        # adjust the install path if a custom install path is given
-        ZMM.__INSTALL_PATH = install_path if install_path and os.path.exists(install_path) 
-        else ZMM.__INSTALL_PATH
 
         if direct_link:
             # use case: zmm install mod_abc --url https://github.com/zotonic/mod_abc
@@ -211,7 +207,12 @@ if __name__ == "__main__":
     elif command == 'deactivate' :
         pass
     elif command == 'install' :
-        pass
+        # adjust the install path if a custom install path is given
+        if args.path and os.path.exists(args.path):
+            ZMM.__INSTALL_PATH = args.path
+
+        zmm.install()
+
     elif command == 'uninstall' :
         pass
     elif command == 'freeze' :
