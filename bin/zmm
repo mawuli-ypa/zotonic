@@ -202,9 +202,9 @@ if __name__ == "__main__":
         modules = zmm.search(title, category)
         table = [[module['title'], module['category'], module['repository']] for module in modules]
  
-        from tabulate import tabulate
-        headers =  ["Module", "Category", "Repository"]
-        print tabulate(table,headers,tablefmt="simple")
+        print "%s\t %s\t %s\t" % ("Module", "Category", "Repository")
+        for row in table:
+            print "%s\t %s\t %s\t" % (row[0], row[1], row[2])
 
     elif command == 'activate' :
         # acitaves a modules, and its dependencies
