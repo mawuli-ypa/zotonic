@@ -80,6 +80,7 @@ class ZMM():
         # use case 2: zmm install mod_abc -r requirements.txt
         # link is a zip file
         if download_link.endswith('.zip'):
+            # todo: use a differnt compression format
             print "*** Downloaidng %s from %s " % (modulename, download_link)
             r = requests.get(download_link)
             if r.ok:
@@ -145,14 +146,14 @@ class ZMM():
         pass
 
     def bundle(self,site):
-        """ Bundle all modules into a zip file """
+        """ Bundle all modules into a compressed file format """
         pass
 
     def search(self, title=None, category=None):
         """ Search for modules, and filter by category or Zotonic compatibility version"""
         def get_query_args(title, category):
             if category and not title:
-                return {'category':'category'}
+                return {'category':category}
             elif title and not category:        
                 return {'title': title}
             elif category and title:
@@ -187,7 +188,7 @@ if __name__ == "__main__":
                       default='global')   
 #    parser.add_option("-t", "--timeout", help="Timeout(in seconds) for executing task", default=60)   
     parser.add_option('-u','--url', help="Link to directly clone/download module", action='store')
-    parser.add_option('-t','--type', help="Format in which module is saved. Options include git, hg, zip", action='store', default='git')
+#    parser.add_option('-t','--type', help="Format in which module is saved. Options include git, hg, zip", action='store', default='git')
 
     (opts, args) = parser.parse_args()
     if not args:
