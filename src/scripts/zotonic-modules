@@ -77,7 +77,7 @@ class ZMM():
 
     def __direct_download(self, modulename, download_link):
         # use case 1: zmm install mod_abc --url https://github.com/zotonic/mod_abc
-        # use case 2: zmm install mod_abc -r requirements.txt
+        # use case 2: zmm install mod_abc -r zmm_05_55_08_07_2013.txt
         # link is a zip file
         if download_link.endswith('.zip'):
             # todo: use a differnt compression format
