@@ -28,7 +28,7 @@ import requests
 import re
 from urlparse import urlparse
 from optparse import OptionParser
-import zipfile
+import tarfile
 from StringIO import StringIO
 
 try:
@@ -78,20 +78,20 @@ class ZMM():
     def __direct_download(self, modulename, download_link):
         # use case 1: zmm install mod_abc --url https://github.com/zotonic/mod_abc
         # use case 2: zmm install mod_abc -r zmm_05_55_08_07_2013.txt
-        # link is a zip file
-        if download_link.endswith('.zip'):
-            # todo: use a differnt compression format
+        if download_link.endswith('.tar.gz'):
+            # todo: support more different compression formats
             print "*** Downloaidng %s from %s " % (modulename, download_link)
             r = requests.get(download_link)
             if r.ok:
-                extract_path = os.path.join(ZMM.INHSTALL_PATH, module_name)
+                extract_path = os.path.join(ZMM.INSTALL_PATH, module_name)
                 try:
-                    z = zipfile.ZipFile(StringIO(r.content))
-                    z.extractall(extract_path)
+                    tar = tarfile.open(StringIO(r.content))
+                    tar.extractall(extract_path)
+                    tar.close()
                 except:
                     print "*** Error extracting %s to %s" % (modulename, extract_path)
                     exit(2)
-        else: # non-zip file link
+        else: # non-archive link
             # todo: how to detect SCM given only the remote repository link
             for scm in ZMM.__SUPPORTED_SCMS:
                 # clone repository
@@ -207,12 +207,14 @@ if __name__ == "__main__":
         print tabulate(table,headers,tablefmt="simple")
 
     elif command == 'activate' :
+        # acitaves a modules, and its dependencies
         pass
+
     elif command == 'deactivate' :
+        # deactivate a module and dependenyc modules that are not needed by other modules
         pass
+
     elif command == 'install':
-        #print "***OPTS: "
-        #print opts
         modulename = command_args[0] if command_args[0] else None
         if not modulename:
             parser.print_help()
@@ -222,15 +224,25 @@ if __name__ == "__main__":
         # adjust the install path if a custom install path is given
         if opts.path and os.path.exists(opts.path):
             ZMM.INSTALL_PATH = opts.path
-        zmm.install(modulename,module_repository_url)
+        if zmm.install(modulename,module_repository_url):
+            # to do: build module and update the server
+            pass
 
     elif command == 'uninstall' :
+        # uninstall's a module - deactivates and deletes module
         pass
-    elif command == 'freeze' :
+
+    elif command == 'freeze':
+        # write currently installed modules, and their dependencies to a file
         pass
-    elif command == 'bundle' :
+
+    elif command == 'bundle':
+        # compress installed modules, and their dependencies into an archive 
         pass
+
     elif command == 'restart':
+        # restart modules
         pass
+
     else:
         parser.print_help()
