@@ -144,7 +144,8 @@ class ZMM():
     def freeze(self):
         """ Write the list of installed modules into a file for use later """
         import glob
-        ZMM.INSTALL_PATH= "/home/mawuli/dev/zotonic"
+        # ZMM.INSTALL_PATH= "/home/mawuli/dev/zotonic"
+        # dictionary to hold all Zotonic modules
         modules = {}
         shared_modules =  glob.glob(os.path.join(ZMM.INSTALL_PATH, 'priv/modules',"mod_*"))
         modules['shared'] = [os.path.basename(module) for module in shared_modules]
@@ -160,9 +161,13 @@ class ZMM():
         filename = 'zmm_%s.txt' % datetime.now().strftime("%y_%m_%d_%H_%M")
         output_path = os.path.join(os.environ['ZOTONIC'],'priv',filename)
         # write modules dictionary data to a file
-        with open(output_path,'w') as outfile:
-            json.dump(modules, outfile)
-            
+        try:
+            with open(output_path,'w') as outfile:
+                json.dump(modules, outfile)
+
+            print "successfully froze modules list to %s" % output_path
+        except:
+            print "***ERROR: failed to write to %s"  % output_path
 
     def bundle(self,site):
         """ Bundle all modules into a compressed file format """
