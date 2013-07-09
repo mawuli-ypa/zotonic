@@ -47,11 +47,11 @@ class ZMM():
 
     def __init__(self):
         # help message
-       self.USAGE = """zmm %s for Zotonic built on %s.
-       Usage: zmm [OPTIONS] COMMAND
-        zmm [options] install|remove module1, [module2 ...]
-        zmm [options] activate module1 [module2 ...]
-    """ % (__version__, __last_modified__)
+       self.USAGE = """
+        zmm COMMAND [OPTIONS] 
+        zmm install|uninstall|activate|deactiave module1, [module2 ...] [OPTIONS] 
+        zmm freeze|bundle|search|list [OPTIONS]
+    """
 
     def install(self, modulename, direct_link = False):
         """ Install modules. """
