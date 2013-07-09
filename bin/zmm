@@ -30,7 +30,7 @@ from urlparse import urlparse
 from optparse import OptionParser
 import tarfile
 from StringIO import StringIO
-
+import subprocess
 
 try:
     import json
@@ -61,18 +61,41 @@ class ZMM():
         
         # dictionary to hold all Zotonic modules
         modules = {}
+        os.environ['ZOTONIC'] = '/home/mawuli/dev/zotonic'
         shared_modules =  glob.glob(os.path.join(os.environ['ZOTONIC'],'priv/modules','mod_*'))
-        modules['shared'] = [os.path.basename(module) for module in shared_modules]
+
+        # get remote repository links
+        modules['shared'] = {}
+        for (modulename,modulepath) in [(os.path.basename(module),module) for module in shared_modules]:
+            # get the repo's remote url
+            modules['shared'][modulename] = self.__get_repo_url(modulepath) 
+
+        # scan for modules in zotonic sites
         sites_dir = os.path.join(os.environ['ZOTONIC'],'priv','sites')
         zotonic_sites = filter(lambda x: os.path.isdir(os.path.join(sites_dir,x)),
                                os.listdir(sites_dir))
         for site in zotonic_sites:
             if site not in modules:
-                modules[site] = []
-            site_modules = glob.glob(os.path.join(site,"modules/*"))
-            modules[site] = [os.path.basename(module) for module in site_modules]        
-
+                modules[site] = {}
+            site_modules = glob.glob(os.path.join(sites_dir,site,"modules/*"))
+            
+            # get remote repository links        
+            for (modulename,modulepath) in [(os.path.basename(module),module) for module in site_modules]:
+                # get the repo's remote url
+                modules[site][modulename] = self.__get_repo_url(modulepath)
+ 
         return modules
+
+    def __get_repo_url(self, repo_path):
+        if os.path.exists(os.path.join(repo_path,'.git')):
+            # repository is a Git repo
+            # import shlex
+            cmd = 'cd %s  && git remote -v | grep fetch | cut -f 2 | cut -d " " -f 1 ' % repo_path
+            return subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE).stdout.read().rstrip()
+        else:
+            # todo: how to get Mercurial/hg repo remote url
+            return None
+
 
     def install(self, modulename, direct_link = False):
         """ Install modules. """
