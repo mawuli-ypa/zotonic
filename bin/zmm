@@ -31,6 +31,7 @@ from optparse import OptionParser
 import tarfile
 from StringIO import StringIO
 
+
 try:
     import json
 except ImportError:
@@ -52,6 +53,26 @@ class ZMM():
         zmm install|uninstall|activate|deactiave module1, [module2 ...] [OPTIONS] 
         zmm freeze|bundle|search|list [OPTIONS]
     """
+
+    def __scan_modules(self):
+        """ scan for modules in shared modules dircectory and modules directoies in the
+        various sites """
+        import glob
+        
+        # dictionary to hold all Zotonic modules
+        modules = {}
+        shared_modules =  glob.glob(os.path.join(os.environ['ZOTONIC'],'priv/modules','mod_*'))
+        modules['shared'] = [os.path.basename(module) for module in shared_modules]
+        sites_dir = os.path.join(os.environ['ZOTONIC'],'priv','sites')
+        zotonic_sites = filter(lambda x: os.path.isdir(os.path.join(sites_dir,x)),
+                               os.listdir(sites_dir))
+        for site in zotonic_sites:
+            if site not in modules:
+                modules[site] = []
+            site_modules = glob.glob(os.path.join(site,"modules/*"))
+            modules[site] = [os.path.basename(module) for module in site_modules]        
+
+        return modules
 
     def install(self, modulename, direct_link = False):
         """ Install modules. """
@@ -143,18 +164,8 @@ class ZMM():
 
     def freeze(self):
         """ Write the list of installed modules into a file for use later """
-        import glob
         # ZMM.INSTALL_PATH= "/home/mawuli/dev/zotonic"
-        # dictionary to hold all Zotonic modules
-        modules = {}
-        shared_modules =  glob.glob(os.path.join(ZMM.INSTALL_PATH, 'priv/modules',"mod_*"))
-        modules['shared'] = [os.path.basename(module) for module in shared_modules]
-        zotonic_sites = os.listdir(os.path.join(ZMM.INSTALL_PATH,"priv/sites"))
-        for site in zotonic_sites:
-            if site not in modules:
-                modules[site] = []
-            site_modules = glob.glob(os.path.join(site,"modules/*"))
-            modules[site] = [os.path.basename(module) for module in site_modules]        
+        modules = self.__scan_modules()
 
         from datetime import datetime      
         # set filename to current time
@@ -196,6 +207,7 @@ class ZMM():
     def restart(self,site, modules):
         """ Restart modules """
         pass
+
 
 if __name__ == "__main__":
     zmm = ZMM()
