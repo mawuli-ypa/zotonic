@@ -158,9 +158,9 @@ class ZMM():
         from datetime import datetime      
         # set filename to current time
         filename = 'zmm_%s.txt' % datetime.now().strftime("%y_%m_%d_%H_%M")
-
+        output_path = os.path.join(os.environ['ZOTONIC'],'priv',filename)
         # write modules dictionary data to a file
-        with open(filename,'w') as outfile:
+        with open(output_path,'w') as outfile:
             json.dump(modules, outfile)
             
 
@@ -252,11 +252,11 @@ if __name__ == "__main__":
         pass
 
     elif command == 'freeze':
-        # write currently installed modules, and their dependencies to a file
+        # write currently installed modules to a file
         zmm.freeze()
 
     elif command == 'bundle':
-        # compress installed modules, and their dependencies into an archive 
+        # compress installed modules into an archive 
         pass
 
     elif command == 'restart':
