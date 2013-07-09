@@ -141,9 +141,28 @@ class ZMM():
         """ Deactive modules"""
         pass
 
-    def freeze(self,site):
+    def freeze(self):
         """ Write the list of installed modules into a file for use later """
-        pass
+        import glob
+        ZMM.INSTALL_PATH= "/home/mawuli/dev/zotonic"
+        modules = {}
+        shared_modules =  glob.glob(os.path.join(ZMM.INSTALL_PATH, 'priv/modules',"mod_*"))
+        modules['shared'] = [os.path.basename(module) for module in shared_modules]
+        zotonic_sites = os.listdir(os.path.join(ZMM.INSTALL_PATH,"priv/sites"))
+        for site in zotonic_sites:
+            if site not in modules:
+                modules[site] = []
+            site_modules = glob.glob(os.path.join(site,"modules/*"))
+            modules[site] = [os.path.basename(module) for module in site_modules]        
+
+        from datetime import datetime      
+        # set filename to current time
+        filename = 'zmm_%s.txt' % datetime.now().strftime("%y_%m_%d_%H_%M")
+
+        # write modules dictionary data to a file
+        with open(filename,'w') as outfile:
+            json.dump(modules, outfile)
+            
 
     def bundle(self,site):
         """ Bundle all modules into a compressed file format """
@@ -202,9 +221,9 @@ if __name__ == "__main__":
         modules = zmm.search(title, category)
         table = [[module['title'], module['category'], module['repository']] for module in modules]
  
-        print "%s\t %s\t %s\t" % ("Module", "Category", "Repository")
+        print "%-25s %-20s  %s" % ("Module", "Category", "Repository")
         for row in table:
-            print "%s\t %s\t %s\t" % (row[0], row[1], row[2])
+            print "%-25s %-20s  %s" % (row[0], row[1], row[2])
 
     elif command == 'activate' :
         # acitaves a modules, and its dependencies
@@ -234,7 +253,7 @@ if __name__ == "__main__":
 
     elif command == 'freeze':
         # write currently installed modules, and their dependencies to a file
-        pass
+        zmm.freeze()
 
     elif command == 'bundle':
         # compress installed modules, and their dependencies into an archive 
