@@ -42,6 +42,7 @@ class ZMM():
     Class for holding all Zotonic module related functions
     """    
     ZMR_SERVER = 'http://gsoc:8200/api/zmr/repositories'
+    os.environ['ZOTONIC'] = '/home/mawuli/dev/zotonic'
     INSTALL_PATH = os.path.join(os.environ['ZOTONIC'], 'priv/modules')
     __BASE_MODULE_PATH = os.path.join(os.environ['ZOTONIC'], 'modules')
     __SUPPORTED_SCMS =  ["hg", "git"]
@@ -71,10 +72,7 @@ class ZMM():
             # get the repo's remote url
             modules['shared'][modulename] = {'path': modulepath ,'url': self.__get_repo_url(modulepath)}
 
-        # scan for modules in zotonic sites
-        sites_dir = os.path.join(os.environ['ZOTONIC'],'priv','sites')
-        zotonic_sites = filter(lambda x: os.path.isdir(os.path.join(sites_dir,x)),
-                               os.listdir(sites_dir))
+        zotonic_sites = self.__scan_sites()
         for site in zotonic_sites:
             if site not in modules:
                 modules[site] = {}
@@ -225,16 +223,25 @@ class ZMM():
         except:
             print "***ERROR: failed to write to %s"  % output_path
 
+    def __scan_sites(self):
+        # scan for zotonic sites
+        sites_dir = os.path.join(os.environ['ZOTONIC'],'priv','sites')
+        return filter(lambda x: os.path.isdir(os.path.join(sites_dir,x)),
+                               os.listdir(sites_dir))
+
     def bundle(self):
         """ Bundle all modules into a compressed file format """
-        modules = self.__scan_modules()
+        archive_paths = map(lambda x: os.path.join(os.environ['ZOTONIC'], 'priv','sites', x,'modules'), 
+                                    self.__scan_sites()) + [ZMM.INSTALL_PATH]
+        print archive_paths
         filename = 'zmm_%s.tar.gz' % datetime.now().strftime("%y_%m_%d_%H_%M")
         output_filename = os.path.join(os.environ['ZOTONIC'], 'priv',filename)
         print "*** Archiving all modules"
         with tarfile.open(output_filename, "w:gz") as tar:
-            for key in modules:
-                for module, info in modules[key].items():
-                    tar.add(info['path'], arcname=os.path.basename(module))
+                for path in archive_paths:
+                    if os.path.exists(path):
+                        archive_name = path.split('/')[-2]
+                        tar.add(path, arcname=archive_name)
 
         print "***Modules archived saved to %s" % output_filename
 
