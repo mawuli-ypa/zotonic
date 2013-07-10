@@ -42,8 +42,8 @@ class ZMM():
     Class for holding all Zotonic module related functions
     """    
     ZMR_SERVER = 'http://gsoc:8200/api/zmr/repositories'
-    os.environ['ZOTONIC'] = '/home/mawuli/dev/zotonic'
     INSTALL_PATH = os.path.join(os.environ['ZOTONIC'], 'priv/modules')
+    __SITES_DIR = os.path.join(os.environ['ZOTONIC'],'priv','sites')
     __BASE_MODULE_PATH = os.path.join(os.environ['ZOTONIC'], 'modules')
     __SUPPORTED_SCMS =  ["hg", "git"]
 
@@ -64,7 +64,7 @@ class ZMM():
         # dictionary to hold all Zotonic modules
         modules = {}
         os.environ['ZOTONIC'] = '/home/mawuli/dev/zotonic'
-        shared_modules =  glob.glob(os.path.join(os.environ['ZOTONIC'],'priv/modules','mod_*'))
+        shared_modules =  glob.glob(os.path.join(ZMM.INSTALL_PATH,'mod_*'))
 
         # get remote repository links
         modules['shared'] = {}
@@ -76,7 +76,7 @@ class ZMM():
         for site in zotonic_sites:
             if site not in modules:
                 modules[site] = {}
-            site_modules = glob.glob(os.path.join(sites_dir,site,"modules/mod_*"))            
+            site_modules = glob.glob(os.path.join(ZMM.__SITES_DIR, site,"modules/mod_*"))            
 
             # get remote repository links        
             for (modulename,modulepath) in [(os.path.basename(module),module) for module in site_modules]:
@@ -131,7 +131,7 @@ class ZMM():
             modules = json.load(input_file)
             if modules:
                 for key in modules:
-                    site_modules_dir = os.path.join(os.environ['ZOTONIC'], 'priv/sites', key)
+                    site_modules_dir = os.path.join(ZMM.__SITES_DIR, key)
                     install_path = ZMM.INSTALL_PATH if key == 'shared' else site_modules_dir 
                     for module, info in key.items():
                         # todo: check for null urls
@@ -199,7 +199,7 @@ class ZMM():
         """ Uninstall modules """
         pass
    
-    def activate(self):
+    def activate(self, modules):
         """ Install modules"""
         pass
 
@@ -207,13 +207,13 @@ class ZMM():
         """ Deactive modules"""
         pass
 
-    def freeze(self):
+    def freeze(self, path=None):
         """ Write the list of installed modules into a file for use later """
         modules = self.__scan_modules()
 
         # set filename to current time
         filename = 'zmm_%s.txt' % datetime.now().strftime("%y_%m_%d_%H_%M")
-        output_path = os.path.join(os.environ['ZOTONIC'],'priv',filename)
+        output_path = os.path.join(path, filename) if os.path.exists(path) else os.path.join(os.environ['ZOTONIC'],'priv',filename)
         # write modules dictionary data to a file
         try:
             with open(output_path,'w') as outfile:
@@ -225,13 +225,12 @@ class ZMM():
 
     def __scan_sites(self):
         # scan for zotonic sites
-        sites_dir = os.path.join(os.environ['ZOTONIC'],'priv','sites')
-        return filter(lambda x: os.path.isdir(os.path.join(sites_dir,x)),
-                               os.listdir(sites_dir))
+        return filter(lambda x: os.path.isdir(os.path.join(ZMM.__SITES_DIR, x)),
+                               os.listdir(ZMM.__SITES_DIR))
 
     def bundle(self):
         """ Bundle all modules into a compressed file format """
-        archive_paths = map(lambda x: os.path.join(os.environ['ZOTONIC'], 'priv','sites', x,'modules'), 
+        archive_paths = map(lambda x: os.path.join(ZMM.__SITES_DIR, x,'modules'), 
                                     self.__scan_sites()) + [ZMM.INSTALL_PATH]
         print archive_paths
         filename = 'zmm_%s.tar.gz' % datetime.now().strftime("%y_%m_%d_%H_%M")
@@ -244,6 +243,7 @@ class ZMM():
                         tar.add(path, arcname=archive_name)
 
         print "***Modules archived saved to %s" % output_filename
+        
 
     def search(self, title=None, category=None):
         """ Search for modules, and filter by category or Zotonic compatibility version"""
@@ -273,8 +273,6 @@ class ZMM():
 if __name__ == "__main__":
     zmm = ZMM()
     parser = OptionParser(usage=zmm.USAGE)
-    parser.add_option('-q','--quiet', help="Disable verbose output mode", dest='verbose', 
-                      default=True, action='store_false')
     parser.add_option('-f','--force', help="Ignore errors, and finish task", dest='verbose', 
                       default=True, action='store_false')
     parser.add_option('-p','--path', help='modules install path. defaults to priv/modules', 
@@ -283,7 +281,6 @@ if __name__ == "__main__":
                       default=ZMM.ZMR_SERVER)   
     parser.add_option("-s", "--site", help="Site affected by the command", 
                       default='global')   
-#    parser.add_option("-t", "--timeout", help="Timeout(in seconds) for executing task", default=60)   
     parser.add_option('-u','--url', help="Link to directly clone/download module", action='store')
     parser.add_option('-r','--read', help="File containing list of modules to install - usually generated by freeze", action='store')
 
@@ -313,12 +310,12 @@ if __name__ == "__main__":
 
     elif command == 'install':
         # read list of modules from file generated by the freeze command 
-        modulename = opts.read if opts.read else None
+        modules = opts.read if opts.read else None
 
-        # module anme is given
-        modulename = command_args[0] if command_args[0] else None
+        # at least one module name is given
+        modules = command_args if command_args else None
         
-        if not modulename:
+        if not modules:
             parser.print_help()
             exit(1)
 
@@ -326,8 +323,11 @@ if __name__ == "__main__":
         # adjust the install path if a custom install path is given
         if opts.path and os.path.exists(opts.path):
             ZMM.INSTALL_PATH = opts.path
-        if zmm.install(modulename,module_repository_url):        
+        ok = False 
+        for module in modules:
+            ok = zmm.install(module,module_repository_url)    
         # to do: build module and update the server
+        if ok: 
             pass
 
     elif command == 'uninstall' :
@@ -336,7 +336,8 @@ if __name__ == "__main__":
 
     elif command == 'freeze':
         # write currently installed modules to a file
-        zmm.freeze()
+        path = opts.path if opts.path else None
+        zmm.freeze(path)
 
     elif command == 'bundle':
         # compress installed modules into an archive 
