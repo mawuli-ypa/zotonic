@@ -30,16 +30,16 @@
 process_get(_ReqData, Context) ->
     Command = erlang:list_to_atom(z_context:get_q(command, Context, "")),
     Tokens = string:tokens(z_context:get_q(modules, Context, ""),"'"),   
-    Modules = lists:filter(fun(X) -> lists:sublist(X,3) == "mod" end, Tokens).   
+    Modules = lists:filter(fun(X) -> lists:sublist(X,3) == "mod" end, Tokens),   
     Response = case command(Command, Modules, Context) of
                    {error, ErrorMessage} ->
                        {error, ErrorMessage};
-                   Oks -> 
+                   _Other -> 
                        ok
                end,
     z_convert:to_json([Response]).
 
--type command :: activate | deactiavte | restart
+%% -type command() :: activate | deactiavte | restart.
 %% @spec command(command(), list(), #context{}) -> list() || {error, list()} 
 command(activate,Modules, Context) when is_list(Modules) ->
     lists:map(fun(Module)-> z_module_manager:activate(Module, Context) end, Modules);
