@@ -222,12 +222,12 @@ class ZMM():
                 if module in modules:
                     to_delete.append(info['path'])
         if to_delete:
-            if zmm.deactivate(to_delete):
+            if zmm.deactivate(modules):
                 # delete module directories
                 import shutil
                 map(lambda path: shutil.rmtree(path), to_delete)  
             else:
-                print "*** %s Failed to deactivate modules"
+                print "*** Failed to deactivate modules"
 
     def freeze(self, path=None):
         """ Write the list of installed modules into a file for use later """
@@ -354,7 +354,7 @@ if __name__ == "__main__":
         zmm.bundle()
 
     elif command == 'activate':
-        # acitaves a modules, and its dependencies
+        # activates a modules, and its dependencies
         zmm.activate(command_args)
 
     elif command == 'deactivate':
