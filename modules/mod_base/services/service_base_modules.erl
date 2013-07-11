@@ -31,7 +31,8 @@ process_get(_ReqData, Context) ->
     Command = erlang:list_to_atom(z_context:get_q(command, Context, "")),
     Tokens = string:tokens(z_context:get_q(modules, Context, ""),"'"),   
     Modules = lists:filter(fun(X) -> lists:sublist(X,3) == "mod" end, Tokens),   
-    Response = case command(Command, Modules, Context) of
+    Modules1 = lists:map(fun(X)-> erlang:list_to_atom(X) end, Modules),
+    Response = case command(Command, Modules1, Context) of
                    {error, ErrorMessage} ->
                        {error, ErrorMessage};
                    _Other -> 
@@ -41,11 +42,13 @@ process_get(_ReqData, Context) ->
 
 %% -type command() :: activate | deactiavte | restart.
 %% @spec command(command(), list(), #context{}) -> list() || {error, list()} 
+%% @todo: detect non-existent modules. Automatically start dependencies
 command(activate,Modules, Context) when is_list(Modules) ->
-    lists:map(fun(Module)-> z_module_manager:activate(Module, Context) end, Modules);
+    lists:foreach(fun(Module)->  z_module_manager:activate(Module,Context) end, Modules);
 command(deactivate,Modules, Context) when is_list(Modules) ->
-    lists:map(fun(Module)-> z_module_manager:deactivate(Module, Context) end, Modules);
+    lists:foreach(fun(Module)-> z_module_manager:deactivate(Module, Context) end, Modules);
 command(restart,Modules, Context) when is_list(Modules) ->
-    lists:map(fun(Module)-> z_module_manager:restart(Module, Context) end, Modules);
+    lists:foreach(fun(Module)-> z_module_manager:restart(Module, Context) end, Modules);
 command(_Command, _Modules, _Context) ->
     {error, "unsupported command"}.
+
