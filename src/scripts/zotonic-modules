@@ -17,6 +17,11 @@
 #
 # Zotonic CLI for managing modules. Modules are by default pulled from modules.zotonic.com
 #
+# Usage:
+# $ bin/zmm COMMAND [OPTIONS] 
+# $ bin/zmm --help
+# 
+
 
 # version
 __version__ = "0.1.0"
