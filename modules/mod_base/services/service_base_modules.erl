@@ -40,7 +40,7 @@ process_get(_ReqData, Context) ->
                end,
     z_convert:to_json([Response]).
 
-%% -type command() :: activate | deactiavte | restart.
+%% @type command() :: activate | deactiavte | restart.
 %% @spec command(command(), list(), #context{}) -> list() || {error, list()} 
 %% @todo: detect non-existent modules. Automatically start dependencies
 command(activate,Modules, Context) when is_list(Modules) ->
