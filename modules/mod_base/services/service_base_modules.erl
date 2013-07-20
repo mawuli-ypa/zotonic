@@ -29,7 +29,7 @@
 
 process_get(_ReqData, Context) ->
     Command = erlang:list_to_atom(z_context:get_q(command, Context, "")),
-    Tokens = string:tokens(z_context:get_q(modules, Context, ""),"'"),   
+    Tokens = string:tokens(z_context:get_q(modules, Context, ""),"'"),      
     Modules = lists:filter(fun(X) -> lists:sublist(X,3) == "mod" end, Tokens),   
     Modules1 = lists:map(fun(X)-> erlang:list_to_atom(X) end, Modules),
     Response = case command(Command, Modules1, Context) of

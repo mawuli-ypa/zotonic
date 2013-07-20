@@ -334,6 +334,14 @@ class ZMM():
         except:
             print "Parse error while getting module list from " + self.ZMR_SERVER
             exit(os.EX_DATAERR)
+    
+    def update(self, modules):
+        """Update modules
+        
+        Pulls the latest module code changes from the remote repositories.
+
+        """
+        pass
 
 
 if __name__ == "__main__":
@@ -404,6 +412,9 @@ if __name__ == "__main__":
 
     elif command == 'restart':
         zmm.restart(command_args)
+
+    elif command == 'update':
+        zmm.update(command_args)
 
     else:
         parser.print_help()
