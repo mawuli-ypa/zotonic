@@ -357,7 +357,12 @@ if __name__ == "__main__":
 
     (opts, args) = parser.parse_args()
     zmm.ZMR_SERVER= zmm.ZMR_SERVER % opts.site
-    if not args:
+
+    import inspect
+    zmm_commands = map(lambda m: m[0], filter(lambda tuple: not tuple[0].startswith('_'), 
+                          inspect.getmembers(ZMM, predicate=inspect.ismethod)))
+
+    if not args or args[0] not in zmm_commands:
         parser.print_help()
         exit(os.EX_NOINPUT)
     command = args[0] 
