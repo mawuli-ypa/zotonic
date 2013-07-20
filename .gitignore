@@ -19,6 +19,7 @@ rebar
 *.mo
 .#*
 #*
+
 ebin/
 deps/
 
