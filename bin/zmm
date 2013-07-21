@@ -29,7 +29,9 @@ fi
 
 export ZOTONIC_SCRIPTS="$ZOTONIC/src/scripts"
 
-EXIT="$?"
+. $ZOTONIC_SCRIPTS/helpers/zotonic_setup
 $ZOTONIC_SCRIPTS/zotonic-modules ${@:1}
+EXIT="$?"
+. $ZOTONIC_SCRIPTS/helpers/zotonic_teardown
 exit $EXIT
 
