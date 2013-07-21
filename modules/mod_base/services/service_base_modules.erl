@@ -26,9 +26,8 @@
 -export([process_get/2]).
 -include_lib("zotonic.hrl").
 
+
 process_get(_ReqData, Context) ->
-    ?PRINT(z_context:get_q(command, Context)),
-    ?PRINT(z_context:get_q(modules, Context)),
     Command = erlang:list_to_atom(z_context:get_q(command, Context, "")),
     Tokens = string:tokens(z_context:get_q(modules, Context, ""),"'"),      
     Modules = lists:filter(fun(X) -> lists:sublist(X,3) == "mod" end, Tokens),   

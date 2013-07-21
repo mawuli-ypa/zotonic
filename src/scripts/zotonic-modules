@@ -51,7 +51,7 @@ class ZMM():
     for modules on the remote repositories. The default modules repository is http://modules.zotonic.com
     """    
     ZMR_SERVER = 'http://%s/api/zmr/repositories?'
-    MODBASE_API = 'http://%s/api/base/modules?' 
+    ZMR_MODBASE_API = 'http://%s/api/base/modules' 
     INSTALL_PATH = os.path.join(os.environ['ZOTONIC'], 'priv/modules')
     __SITES_DIR = os.path.join(os.environ['ZOTONIC'],'priv','sites')
     __BASE_MODULE_PATH = os.path.join(os.environ['ZOTONIC'], 'modules')
@@ -223,8 +223,8 @@ class ZMM():
 
     def activate(self, modules):
         """ Activates a module, and its dependencies"""
-        params =  urllib.urlencode({'command': 'activate','modules':modules})
-        f = urllib.urlopen(self.MODBASE_API + params)
+        params =  urllib.urlencode({'command': 'activate','modules':str(modules)})
+        f = urllib.urlopen(ZMM.ZMR_MODBASE_API,params)
         print "*** %s OK" % f.code if f.code == 200 else "*** ERROR  %s" % f.code
 
     def deactivate(self,modules):
@@ -233,15 +233,15 @@ class ZMM():
         Also deactivates module dependencies that are not needed by other modules, or not explicitly activated by Zotonic.
         
         """
-        params = urllib.urlencode({'command': 'deactivate','modules':modules})
-        f = urllib.urlopen(self.MODBASE_API + params)
+        params = urllib.urlencode({'command': 'deactivate','modules':str(modules)})
+        f = urllib.urlopen(ZMM.ZMR_MODBASE_API, params)
         print "*** %s OK" % f.code if f.code == 200 else "*** ERROR %s"
         return True if f.code == 200 else False
 
     def restart(self,modules):
         # restart modules
-        params = urllib.urlencode({'command': 'restart','modules':modules})
-        f = urllib.urlopen(self.MODBASE_API + params)
+        params = urllib.urlencode({'command': 'restart','modules':str(modules)})
+        f = urllib.urlopen(ZMM.ZMR_MODBASE_API, param)
         print "*** %s OK" % f.code if f.code == 200 else "*** ERROR  %s" % f.code
 
     def uninstall(self, modules):
@@ -357,10 +357,9 @@ if __name__ == "__main__":
 
     (opts, args) = parser.parse_args()
     zmm.ZMR_SERVER= zmm.ZMR_SERVER % opts.site
-    zmm.MODBASE_API = zmm.MODBASE_API % opts.site
 
     import inspect
-    zmm_commands = map(lambda m: m[0], filter(lambda tuple: not tuple[0].startswith('_'), 
+    zmm_commands = ['list'] + map(lambda m: m[0], filter(lambda tuple: not tuple[0].startswith('_'), 
                           inspect.getmembers(ZMM, predicate=inspect.ismethod)))
 
     if not args or args[0] not in zmm_commands:
