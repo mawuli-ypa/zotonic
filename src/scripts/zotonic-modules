@@ -221,32 +221,31 @@ class ZMM():
         else:
             return True
 
-    def activate(self, modules):
+    def activate(self, modules, site):
         """ Activates a module, and its dependencies"""
         for module in modules:
-            if self.zotonic_call('activate',module):
-                print "***OK"
+            if self.zotonic_call('activate',module, site):
+                print "***OK %s" % module
             else:
                 print "***ERROR deactivating %s" % module
 
-    def deactivate(self,modules):
+    def deactivate(self,modules,site):
         """Deactive a module
         
         Also deactivates module dependencies that are not needed by other modules, or not explicitly activated by Zotonic.
         
         """
+        print modules
         for module in modules:
-            if self.zotonic_call('deactivate',module):
-                print "***OK"
-                return true
+            if self.zotonic_call('deactivate',module,site):
+                print "***OK %s" % module
             else:
                 print "***ERROR deactivating %s" % module
-                return false
 
     def restart(self,modules):
         # restart modules
         for module in modules:
-            if self.zotonic_call('restart',module):
+            if self.zotonic_call('restart',module,site):
                 print "***OK: %s" % module
             else:
                 print "***ERROR deactivating %s" % module
@@ -350,7 +349,7 @@ class ZMM():
         """
         pass
 
-    def zotonic_call(self, function, args,site='zotonic_status'):
+    def zotonic_call(self,function,args,site):
         """Make a call to the Zotonic node
         
         Passes an erlang expression to the $ERL_CALL environment variable.
@@ -360,13 +359,13 @@ class ZMM():
         #todo: get affected site, and Zotonic instance from the user.
         #todo: activate module in all sites if no site is given
         Expression = """
-        Context = z:c(gsoc), 
+        Context = z:c(%s), 
         Response = z_module_manager:%s(%s, Context),
         Response.
         """ % (site, function, args)
 
         z_call = os.environ['ZOTONIC_CALL']
-        run_cmd = 'echo "%s" | %s -e > /dev/null ' % (Expression, z_call)
+        run_cmd = 'echo "%s" | %s -e ' % (Expression, z_call)
         code, signal =  divmod(os.system(run_cmd),1<<8)
         if code != 0:
             return False
@@ -379,7 +378,7 @@ if __name__ == "__main__":
     parser = OptionParser(usage=zmm.USAGE)
     parser.add_option('-p','--path', help='Set custom install path. Defaults to priv/modules', 
                       dest='path', default=ZMM.INSTALL_PATH)
-    parser.add_option("-s", "--site", help="Remote repository site", dest='site',
+    parser.add_option("-s", "--site", help="Remote repository site. Also for site-specific commands such activate, decativate and restart", dest='site',
                       default='modules.zotonic.com')   
     parser.add_option('-u','--url', help="Link to directly clone/download module", action='store')
     parser.add_option('-c','--category', help="Module category", action='store', default='zmr_repository')
@@ -397,6 +396,11 @@ if __name__ == "__main__":
         exit(os.EX_NOINPUT)
     command = args[0] 
     command_args = args[1:]
+    
+    # expecting site value of techblog:8200
+    if command in ['activate', 'deactivate', 'restart']:
+        opts.site = opts.site.split(':')[0]
+
     if command in ['list','search']:
         title = command_args[0] if command_args else None
         modules = zmm.search(title, opts.category)
@@ -440,13 +444,13 @@ if __name__ == "__main__":
         zmm.bundle()
 
     elif command == 'activate':
-        zmm.activate(command_args)
+        zmm.activate(command_args, opts.site)
 
     elif command == 'deactivate':
-        zmm.deactivate(command_args)
+        zmm.deactivate(command_args, opts.site)
 
     elif command == 'restart':
-        zmm.restart(command_args)
+        zmm.restart(command_args, opts.site)
 
     elif command == 'update':
         zmm.update(command_args)
