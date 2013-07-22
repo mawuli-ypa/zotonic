@@ -18,6 +18,8 @@ rebar
 *.swp
 *.mo
 zmm_*
+#*
+.#*
 
 ebin/
 deps/
