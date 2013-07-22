@@ -49,10 +49,10 @@ class ZMM():
     This class holds all functions needed to install, uninstall, activate, deactivate,
     restart, bundle and freeze Zotonic modules. It also exports a function for searching 
     for modules on the remote repositories. The default modules repository is http://modules.zotonic.com
+
     """    
     ZMR_SERVER = 'http://%s/api/zmr/repositories?'
-    ZMR_MODBASE_API = 'http://%s/api/base/modules' 
-    INSTALL_PATH = os.path.join(os.environ['ZOTONIC'], 'priv/modules')
+    INSTALL_PATH = os.path.join(os.environ['ZOTONIC'], 'priv','modules')
     __SITES_DIR = os.path.join(os.environ['ZOTONIC'],'priv','sites')
     __BASE_MODULE_PATH = os.path.join(os.environ['ZOTONIC'], 'modules')
     __SUPPORTED_SCMS =  ["hg", "git"]
@@ -223,9 +223,11 @@ class ZMM():
 
     def activate(self, modules):
         """ Activates a module, and its dependencies"""
-        params =  urllib.urlencode({'command': 'activate','modules':str(modules)})
-        f = urllib.urlopen(ZMM.ZMR_MODBASE_API,params)
-        print "*** %s OK" % f.code if f.code == 200 else "*** ERROR  %s" % f.code
+        for module in modules:
+            if self.zotonic_call('activate',module):
+                print "***OK"
+            else:
+                print "***ERROR deactivating %s" % module
 
     def deactivate(self,modules):
         """Deactive a module
@@ -233,16 +235,21 @@ class ZMM():
         Also deactivates module dependencies that are not needed by other modules, or not explicitly activated by Zotonic.
         
         """
-        params = urllib.urlencode({'command': 'deactivate','modules':str(modules)})
-        f = urllib.urlopen(ZMM.ZMR_MODBASE_API, params)
-        print "*** %s OK" % f.code if f.code == 200 else "*** ERROR %s"
-        return True if f.code == 200 else False
+        for module in modules:
+            if self.zotonic_call('deactivate',module):
+                print "***OK"
+                return true
+            else:
+                print "***ERROR deactivating %s" % module
+                return false
 
     def restart(self,modules):
         # restart modules
-        params = urllib.urlencode({'command': 'restart','modules':str(modules)})
-        f = urllib.urlopen(ZMM.ZMR_MODBASE_API, param)
-        print "*** %s OK" % f.code if f.code == 200 else "*** ERROR  %s" % f.code
+        for module in modules:
+            if self.zotonic_call('restart',module):
+                print "***OK: %s" % module
+            else:
+                print "***ERROR deactivating %s" % module
 
     def uninstall(self, modules):
         """ Uninstall modules
@@ -257,7 +264,7 @@ class ZMM():
                 if module in all_modules[site]:
                     if zmm.deactivate(module):
                         shutil.rmtree(all_modules[site][module]['path'])
-                        print "*** OK: %s uninstalled in %s" % (module, site)
+                        print "*** OK: %s uninstalled from %s" % (module, site)
                     else:
                         print "*** ERROR: %s could not be deactivated" % module
                 else:
@@ -279,7 +286,7 @@ class ZMM():
             with open(output_path,'w') as outfile:
                 json.dump(self.__scan_modules(), outfile)
 
-            print "successfully wrote module list to %s" % output_path
+            print "***OK: %s" % output_path
         except:
             print "***ERROR: failed to write to %s"  % output_path
 
@@ -306,7 +313,7 @@ class ZMM():
                         archive_name = path.split('/')[-2]
                         tar.add(path, arcname=archive_name)
 
-        print "***Modules archived saved to %s" % output_filename
+        print "***OK:  %s" % output_filename
         
 
     def search(self, title=None, category=None):
@@ -343,12 +350,33 @@ class ZMM():
         """
         pass
 
+    def zotonic_call(self, function, args,site='zotonic_status'):
+        """Make a call to the Zotonic node
+        
+        Passes an erlang expression to the $ERL_CALL environment variable.
+        The expression is a call to z_module_manager. The z_module_mamanger method to call,
+        argumnents, and the affected site are passed by to this function.        
+        """
+        Expression = """
+        Context = z:c(gsoc), 
+        Response = z_module_manager:%s(%s, Context),
+        Response.
+        """ % (site, function, args)
+
+        z_call = os.environ['ZOTONIC_CALL']
+        run_cmd = 'echo "%s" | %s -e > /dev/null ' % (Expression, z_call)
+        code, signal =  divmod(os.system(run_cmd),1<<8)
+        if code != 0:
+            return False
+        else:
+            return True
+
 
 if __name__ == "__main__":
     zmm = ZMM()
     parser = OptionParser(usage=zmm.USAGE)
     parser.add_option('-p','--path', help='Set custom install path. Defaults to priv/modules', 
-                      dest='path', default=ZMM.INSTALL_PATH )
+                      dest='path', default=ZMM.INSTALL_PATH)
     parser.add_option("-s", "--site", help="Remote repository site", dest='site',
                       default='modules.zotonic.com')   
     parser.add_option('-u','--url', help="Link to directly clone/download module", action='store')
