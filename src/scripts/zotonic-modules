@@ -355,8 +355,10 @@ class ZMM():
         
         Passes an erlang expression to the $ERL_CALL environment variable.
         The expression is a call to z_module_manager. The z_module_mamanger method to call,
-        argumnents, and the affected site are passed by to this function.        
+        argumnents, and the affected site are passed to this function.        
         """
+        #todo: get affected site, and Zotonic instance from the user.
+        #todo: activate module in all sites if no site is given
         Expression = """
         Context = z:c(gsoc), 
         Response = z_module_manager:%s(%s, Context),
