@@ -65,6 +65,7 @@ class ZMM():
        """
        # debug switch
        self.debug = False
+       self.nodename = os.environ['NODENAME']
 
     def __scan_modules(self):
         """Scan for modules
@@ -357,7 +358,6 @@ class ZMM():
         The expression is a call to z_module_manager. The z_module_mamanger method to call,
         argumnents, and the affected site are passed to this function.        
         """
-        #todo: get affected site, and Zotonic instance from the user.
         #todo: activate module in all sites if no site is given
         Expression = """
         Context = z:c(%s), 
@@ -365,8 +365,18 @@ class ZMM():
         Response.
         """ % (site, function, args)
 
+        # replace the nodename in the $ZOTONIC_CALL ENVIRONMENT 
+        # variable with custom nodename
+        # So, if the value of $ZOTONIC_CALL is 
+        # '/home/mawuli/dev/erlang/r15b01/lib/erl_interface-3.7.7/bin/erl_call -sname zotonic001@milkshake'
+        # find the firt occurrence of space and grab that part as the part to erl_call, 
+        # and piece in the $NAME_ARG and finall add the custom nodename supplied via the -n switch 
+        # All this could be made simpler, if the $ERL_CALL variable is exported
         z_call = os.environ['ZOTONIC_CALL']
+        erl_call = z_call[:z_call.find(' ')] + ' ' 
+        z_call = erl_call + os.environ['NAME_ARG'] + " %s@$NODEHOST" % self.nodename
         run_cmd = 'echo "%s" | %s -e' if self.debug else 'echo "%s" | %s -e  > /dev/null 2>&1'
+        print run_cmd % (Expression, z_call)
         code, signal =  divmod(os.system(run_cmd % (Expression, z_call)),1<<8)
         if code != 0:
             return False
@@ -385,6 +395,7 @@ if __name__ == "__main__":
     parser.add_option('-c','--category', help="Module category", action='store', default='zmr_repository')
     parser.add_option('-f','--file', help="File containing list of modules to install", action='store', dest='file')
     parser.add_option('-d','--debug', help="Enable debugging", action='store_true', dest='debug', default=zmm.debug)
+    parser.add_option('-n','--node', help="Zotonic Erlang node", action='store', dest='node')
 
     (opts, args) = parser.parse_args()
     zmm.ZMR_SERVER= zmm.ZMR_SERVER % opts.site
@@ -405,6 +416,10 @@ if __name__ == "__main__":
 
     # toggle debug switch
     zmm.debug = opts.debug
+
+    # affected Zotonic node
+    if opts.node:
+        zmm.nodename = opts.node
 
     if command in ['list','search']:
         title = command_args[0] if command_args else None
