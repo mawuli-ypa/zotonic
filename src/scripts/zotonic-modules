@@ -63,7 +63,8 @@ class ZMM():
            zmm install|uninstall|activate|deactiave module1, [module2 ...] [OPTIONS] 
            zmm freeze|bundle|search|list [OPTIONS]
        """
-
+       # debug switch
+       self.debug = False
 
     def __scan_modules(self):
         """Scan for modules
@@ -365,8 +366,8 @@ class ZMM():
         """ % (site, function, args)
 
         z_call = os.environ['ZOTONIC_CALL']
-        run_cmd = 'echo "%s" | %s -e ' % (Expression, z_call)
-        code, signal =  divmod(os.system(run_cmd),1<<8)
+        run_cmd = 'echo "%s" | %s -e' if self.debug else 'echo "%s" | %s -e  > /dev/null 2>&1'
+        code, signal =  divmod(os.system(run_cmd % (Expression, z_call)),1<<8)
         if code != 0:
             return False
         else:
@@ -377,12 +378,13 @@ if __name__ == "__main__":
     zmm = ZMM()
     parser = OptionParser(usage=zmm.USAGE)
     parser.add_option('-p','--path', help='Set custom install path. Defaults to priv/modules', 
-                      dest='path', default=ZMM.INSTALL_PATH)
+                      dest='path', default=zmm.INSTALL_PATH)
     parser.add_option("-s", "--site", help="Remote repository site. Also for site-specific commands such activate, decativate and restart", dest='site',
                       default='modules.zotonic.com')   
     parser.add_option('-u','--url', help="Link to directly clone/download module", action='store')
     parser.add_option('-c','--category', help="Module category", action='store', default='zmr_repository')
     parser.add_option('-f','--file', help="File containing list of modules to install", action='store', dest='file')
+    parser.add_option('-d','--debug', help="Enable debugging", action='store_true', dest='debug', default=zmm.debug)
 
     (opts, args) = parser.parse_args()
     zmm.ZMR_SERVER= zmm.ZMR_SERVER % opts.site
@@ -400,6 +402,9 @@ if __name__ == "__main__":
     # expecting site value of techblog:8200
     if command in ['activate', 'deactivate', 'restart']:
         opts.site = opts.site.split(':')[0]
+
+    # toggle debug switch
+    zmm.debug = opts.debug
 
     if command in ['list','search']:
         title = command_args[0] if command_args else None
