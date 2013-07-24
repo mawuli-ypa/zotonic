@@ -272,24 +272,15 @@ class ZMM():
                     print "*** ERROR: %s not found in %s" % (module, site)
 
                     
-    def freeze(self, path=None):
-        """Write the list of installed modules to a file
+    def freeze(self):
+        """Print the list of installed modules
 
-        The data written to the file is a dictionary of modules available on the Zotonic server
-        when the freeze command is issued. By default, the file is placed in the Zotonic default install path - 
-        'ZOTONIC_ROOT_DIR/priv', and named in a format like zmm_05_55_08_07_2013.txt
+        The output is a dictionary of modules available on the Zotonic server.
+        By default, the output is written to the console but can be redirected/piped
+        to a file.
 
         """
-        filename = 'zmm_%s.txt' % datetime.now().strftime("%y_%m_%d_%H_%M")
-        output_path = os.path.join(path, filename) if os.path.exists(path) else os.path.join(os.environ['ZOTONIC'],'priv',filename)
-        # write modules dictionary data to a file
-        try:
-            with open(output_path,'w') as outfile:
-                json.dump(self.__scan_modules(), outfile)
-
-            print "***OK: %s" % output_path
-        except:
-            print "***ERROR: failed to write to %s"  % output_path
+        print self.__scan_modules()
 
     def __scan_sites(self):
         """Scan for Zotonic sites in the install path"""
@@ -369,14 +360,13 @@ class ZMM():
         # variable with custom nodename
         # So, if the value of $ZOTONIC_CALL is 
         # '/home/mawuli/dev/erlang/r15b01/lib/erl_interface-3.7.7/bin/erl_call -sname zotonic001@milkshake'
-        # find the firt occurrence of space and grab that part as the part to erl_call, 
+        # find the firt occurrence of space and grab that part as the path to erl_call, 
         # and piece in the $NAME_ARG and finall add the custom nodename supplied via the -n switch 
         # All this could be made simpler, if the $ERL_CALL variable is exported
         z_call = os.environ['ZOTONIC_CALL']
         erl_call = z_call[:z_call.find(' ')] + ' ' 
         z_call = erl_call + os.environ['NAME_ARG'] + " %s@$NODEHOST" % self.nodename
         run_cmd = 'echo "%s" | %s -e' if self.debug else 'echo "%s" | %s -e  > /dev/null 2>&1'
-        print run_cmd % (Expression, z_call)
         code, signal =  divmod(os.system(run_cmd % (Expression, z_call)),1<<8)
         if code != 0:
             return False
@@ -410,10 +400,14 @@ if __name__ == "__main__":
     command = args[0] 
     command_args = args[1:]
     
-    # expecting site value of techblog:8200
+    # fixthis: grab site
     if command in ['activate', 'deactivate', 'restart']:
-        opts.site = opts.site.split(':')[0]
-
+        if re.match(r'[A-Za-z0-9_]+', opts.site):
+            opts.site = opts.site
+        else:
+            print "***ERROR: Invalid site name: %s" % opts.site
+            exit(0)
+            
     # toggle debug switch
     zmm.debug = opts.debug
 
@@ -457,8 +451,7 @@ if __name__ == "__main__":
         zmm.uninstall(command_args)
 
     elif command == 'freeze':
-        path = opts.path if opts.path else None
-        zmm.freeze(path)
+        zmm.freeze()
 
     elif command == 'bundle':
         zmm.bundle()
