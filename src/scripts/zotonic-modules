@@ -406,7 +406,7 @@ if __name__ == "__main__":
             opts.site = opts.site
         else:
             print "***ERROR: Invalid site name: %s" % opts.site
-            exit(0)
+            exit(os.EX_OK)
             
     # toggle debug switch
     zmm.debug = opts.debug
@@ -439,7 +439,7 @@ if __name__ == "__main__":
                 ok = zmm.install(module)
         else:
             parser.print_help()
-            exit(1)
+            exit(os.EX_USAGE)
 
         # install ok
         if ok: 
