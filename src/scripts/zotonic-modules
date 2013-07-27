@@ -252,27 +252,26 @@ class ZMM():
             else:
                 print "***ERROR deactivating %s" % module
 
-    def uninstall(self, modules):
+    def uninstall(self, module, site=None):
         """ Uninstall modules
         
         Deactivates and deletes a mdoule 
 
         """        
         import shutil
-        Found = False
-        all_modules = zmm.__scan_modules()
-        for site in all_modules:
-            for module in modules:
-                if module in all_modules[site]:
-                    Found = True
-                    if self.zotonic_call('deactivate', module, site):
-                        shutil.rmtree(all_modules[site][module]['path'])
-                        print "*** OK: %s uninstalled from %s" % (module, site)
-                    else:
-                        print "*** ERROR: %s could not be deactivated" % module
-        if not Found:
+        if site in self.__scan_sites():
+            module_path = os.path.join(self.__SITES_DIR, site,'modules', module)
+        else:
+            module_path = os.path.join(self.INSTALL_PATH, module)
+        # deactivate module and delete module directory
+        if os.path.exists(module_path):
+            self.zotonic_call('deactivate', module, site)
+            shutil.rmtree(module_path)
+            print "*** OK: %s uninstalled from %s" % (module, site)
+        else:
             print "*** ERROR: %s not found" % module
-
+            exit(2)       
+       
                     
     def freeze(self):
         """Print the list of installed modules
@@ -450,7 +449,8 @@ if __name__ == "__main__":
         
 
     elif command == 'uninstall':
-        zmm.uninstall(command_args)
+        for module in command_args:
+            zmm.uninstall(module, opts.site)
 
     elif command == 'freeze':
         zmm.freeze()
