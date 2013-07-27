@@ -259,17 +259,19 @@ class ZMM():
 
         """        
         import shutil
+        Found = False
         all_modules = zmm.__scan_modules()
         for site in all_modules:
             for module in modules:
                 if module in all_modules[site]:
-                    if zmm.deactivate(module):
+                    Found = True
+                    if self.zotonic_call('deactivate', module, site):
                         shutil.rmtree(all_modules[site][module]['path'])
                         print "*** OK: %s uninstalled from %s" % (module, site)
                     else:
                         print "*** ERROR: %s could not be deactivated" % module
-                else:
-                    print "*** ERROR: %s not found in %s" % (module, site)
+        if not Found:
+            print "*** ERROR: %s not found" % module
 
                     
     def freeze(self):
