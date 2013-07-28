@@ -51,7 +51,7 @@ class ZMM():
     for modules on the remote repositories. The default modules repository is http://modules.zotonic.com
 
     """    
-    ZMR_SERVER = 'http://%s/api/zmr/repositories?'
+    ZMR_SERVER = 'http://%s/api/zmr/repositories'
     INSTALL_PATH = os.path.join(os.environ['ZOTONIC'], 'priv','modules')
     __SITES_DIR = os.path.join(os.environ['ZOTONIC'],'priv','sites')
     __BASE_MODULE_PATH = os.path.join(os.environ['ZOTONIC'], 'modules')
@@ -309,40 +309,22 @@ class ZMM():
         print "***OK:  %s" % output_filename
         
 
-    def search(self, title=None, category=None):
+    def search(self, title=None):
         """ Search for modules
         
         Searches for modules on the remote repository API which defaults to modules.zotonic.com. 
         The response can be filtered or by module name/title match.
         
         """
-        def get_query_args(title, category):
-            if category and not title:
-                return {'category': category}
-            elif title and not category:        
-                return {'title': title}
-            elif category and title:
-                return {'category': category, 'title': title}
-            else:
-                return {'category':None, 'title': None}
-
         print "Getting module index"
-        params = urllib.urlencode(get_query_args(title, category))
         try:
-            fp = urllib.urlopen(self.ZMR_SERVER + params)
+            url = self.ZMR_SERVER + '?q=%s' % title if title else self.ZMR_SERVER
+            fp = urllib.urlopen(url)
             return json.loads(fp.read())
         except:
             print "Parse error while getting module list from " + self.ZMR_SERVER
             exit(os.EX_DATAERR)
     
-    def update(self, modules):
-        """Update modules
-        
-        Pulls the latest module code changes from the remote repositories.
-
-        """
-        pass
-
     def zotonic_call(self,function,args,site):
         """Make a call to the Zotonic node
         
@@ -383,7 +365,6 @@ if __name__ == "__main__":
     parser.add_option("-s", "--site", help="Remote repository site. Also for site-specific commands such activate, decativate and restart", dest='site',
                       default='modules.zotonic.com')   
     parser.add_option('-u','--url', help="Link to directly clone/download module", action='store')
-    parser.add_option('-c','--category', help="Module category", action='store', default='zmr_repository')
     parser.add_option('-f','--file', help="File containing list of modules to install", action='store', dest='file')
     parser.add_option('-d','--debug', help="Enable debugging", action='store_true', dest='debug', default=zmm.debug)
     parser.add_option('-n','--node', help="Zotonic Erlang node", action='store', dest='node')
@@ -401,7 +382,6 @@ if __name__ == "__main__":
     command = args[0] 
     command_args = args[1:]
     
-    # fixthis: grab site
     if command in ['activate', 'deactivate', 'restart']:
         if re.match(r'[A-Za-z0-9_]+', opts.site):
             opts.site = opts.site
@@ -418,12 +398,12 @@ if __name__ == "__main__":
 
     if command in ['list','search']:
         title = command_args[0] if command_args else None
-        modules = zmm.search(title, opts.category)
-        table = [[module['title'], module['category'], module['repository']] for module in modules]
- 
-        print "%-25s %-20s  %s" % ("Module", "Category", "Repository")
+        modules = zmm.search(title)
+        table = [[module['title'], module['repository']] for module in modules]
+    
+        print "%-25s %s" % ("Module", "Repository")
         for row in table:
-            print "%-25s %-20s  %s" % (row[0], row[1], row[2])
+            print "%-25s  %s" % (row[0], row[1])
 
     elif command == 'install':
         # update the install path if a custom install path is given
