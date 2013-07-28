@@ -427,7 +427,6 @@ if __name__ == "__main__":
             os.system("make -j4")
             os.system("%s update" % os.path.join(os.environ["ZOTONIC_BIN"], "zotonic"))
         
-
     elif command == 'uninstall':
         for module in command_args:
             zmm.uninstall(module, opts.site)
