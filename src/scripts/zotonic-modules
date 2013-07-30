@@ -358,7 +358,7 @@ if __name__ == "__main__":
     parser = OptionParser(usage=zmm.USAGE)
     parser.add_option('-p','--path', help='Set custom install path. Defaults to priv/modules', 
                       dest='path', default=zmm.INSTALL_PATH)
-    parser.add_option("-s", "--site", help="Remote repository site. Also for site-specific commands such activate, decativate and restart", dest='site',
+    parser.add_option("-s", "--site", help="Remote repository site or Zotonic site for site-specific commands such activate, decativate and restart", dest='site',
                       default='modules.zotonic.com')   
     parser.add_option('-u','--url', help="Link to directly clone/download module", action='store')
     parser.add_option('-f','--file', help="File containing list of modules to install", action='store', dest='file')
