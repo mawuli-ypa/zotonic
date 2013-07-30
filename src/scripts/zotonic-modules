@@ -372,6 +372,7 @@ if __name__ == "__main__":
     zmm_commands = ['list','search','install','uninstall',
                     'activate','deactivate','restart','freeze','bundle'] 
 
+    # check for valid commands
     if not args or args[0] not in zmm_commands:
         parser.print_help()
         exit(os.EX_NOINPUT)
@@ -379,6 +380,10 @@ if __name__ == "__main__":
     command = args[0] 
     command_args = args[1:]
     
+    #require command arguments
+    if command not in ['list','search'] and len(command_args) < 1:
+        parser.print_help()
+
     if command in ['activate', 'deactivate', 'restart']:
         if re.match(r'[A-Za-z0-9_]+', opts.site):
             opts.site = opts.site
@@ -415,9 +420,6 @@ if __name__ == "__main__":
         elif command_args:
             for module in command_args:
                 ok = zmm.install(module)
-        else:
-            parser.print_help()
-            exit(os.EX_USAGE)
 
         # install ok
         if ok: 
