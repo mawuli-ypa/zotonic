@@ -223,7 +223,7 @@ class ZMM():
         else:
             return True
 
-    def activate(self, modules, site):
+    def activate(self, module, site):
         """ Activates a module, and its dependencies"""
         if self.zotonic_call('activate',module, site):
             print "***OK %s" % module
