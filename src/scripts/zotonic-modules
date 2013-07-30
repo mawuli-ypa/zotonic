@@ -133,7 +133,7 @@ class ZMM():
             return False
 
         if direct_link:
-            self.__direct_download(modulename, direct_link)
+            return self.__direct_download(modulename, direct_link)
         else:    
             info  = [mod for mod in self.search()  if mod['title'] == modulename]
             if not info:
@@ -375,6 +375,7 @@ if __name__ == "__main__":
     if not args or args[0] not in zmm_commands:
         parser.print_help()
         exit(os.EX_NOINPUT)
+
     command = args[0] 
     command_args = args[1:]
     
@@ -410,7 +411,7 @@ if __name__ == "__main__":
         if opts.file: # read module list from file
             ok = zmm.install(opts.file)
         elif opts.url: #directly install from url
-            ok = zmm.install(command_args,opts.url)
+            ok = zmm.install(command_args[0],opts.url)
         elif command_args:
             for module in command_args:
                 ok = zmm.install(module)
