@@ -225,32 +225,28 @@ class ZMM():
 
     def activate(self, modules, site):
         """ Activates a module, and its dependencies"""
-        for module in modules:
-            if self.zotonic_call('activate',module, site):
-                print "***OK %s" % module
-            else:
-                print "***ERROR deactivating %s" % module
+        if self.zotonic_call('activate',module, site):
+            print "***OK %s" % module
+        else:
+            print "***ERROR activating %s" % module
 
-    def deactivate(self,modules,site):
+    def deactivate(self,module,site):
         """Deactive a module
         
         Also deactivates module dependencies that are not needed by other modules, or not explicitly activated by Zotonic.
         
         """
-        print modules
-        for module in modules:
-            if self.zotonic_call('deactivate',module,site):
-                print "***OK %s" % module
-            else:
-                print "***ERROR deactivating %s" % module
+        if self.zotonic_call('deactivate',module,site):
+            print "***OK %s" % module
+        else:
+            print "***ERROR deactivating %s" % module
 
-    def restart(self,modules):
+    def restart(self,module,site):
         # restart modules
-        for module in modules:
-            if self.zotonic_call('restart',module,site):
-                print "***OK: %s" % module
-            else:
-                print "***ERROR deactivating %s" % module
+        if self.zotonic_call('restart',module,site):
+            print "***OK: %s" % module
+        else:
+            print "***ERROR restarting %s" % module
 
     def uninstall(self, module, site=None):
         """ Uninstall modules
@@ -438,16 +434,16 @@ if __name__ == "__main__":
         zmm.bundle()
 
     elif command == 'activate':
-        zmm.activate(command_args, opts.site)
+        for module in command_args:
+            zmm.activate(module, opts.site)
 
     elif command == 'deactivate':
-        zmm.deactivate(command_args, opts.site)
+        for module in command_args:
+            zmm.deactivate(module, opts.site)
 
     elif command == 'restart':
-        zmm.restart(command_args, opts.site)
-
-    elif command == 'update':
-        zmm.update(command_args)
+        for module in command_args:
+            zmm.restart(module, opts.site)
 
     else:
         parser.print_help()
