@@ -368,9 +368,9 @@ if __name__ == "__main__":
     (opts, args) = parser.parse_args()
     zmm.ZMR_SERVER= zmm.ZMR_SERVER % opts.site
 
-    import inspect
-    zmm_commands = ['list'] + map(lambda m: m[0], filter(lambda tuple: not tuple[0].startswith('_'), 
-                          inspect.getmembers(ZMM, predicate=inspect.ismethod)))
+    # valid commands
+    zmm_commands = ['list','search','install','uninstall',
+                    'activate','deactivate','restart','freeze','bundle'] 
 
     if not args or args[0] not in zmm_commands:
         parser.print_help()
