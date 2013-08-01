@@ -32,9 +32,6 @@ import urllib
 import re
 from urlparse import urlparse
 from optparse import OptionParser
-import tarfile
-from StringIO import StringIO
-import subprocess
 from datetime import datetime      
 
 
@@ -269,40 +266,10 @@ class ZMM():
             exit(2)       
        
                     
-    def freeze(self):
-        """Print the list of installed modules
-
-        The output is a dictionary of modules available on the Zotonic server.
-        By default, the output is written to the console but can be redirected/piped
-        to a file.
-
-        """
-        print self.__scan_modules()
-
     def __scan_sites(self):
         """Scan for Zotonic sites in the install path"""
         return filter(lambda x: os.path.isdir(os.path.join(ZMM.__SITES_DIR, x)),
                                os.listdir(ZMM.__SITES_DIR))
-
-    def bundle(self):
-        """Compress and archive all installed modules.
-        
-        The output of this command is tarfile that is placed in 'ZOTONIC_ROOT'/priv.
-
-        """
-
-        archive_paths = map(lambda x: os.path.join(ZMM.__SITES_DIR, x,'modules'), 
-                                    self.__scan_sites()) + [ZMM.INSTALL_PATH]
-        filename = 'zmm_%s.tar.gz' % datetime.now().strftime("%y_%m_%d_%H_%M")
-        output_filename = os.path.join(os.environ['ZOTONIC'], 'priv',filename)
-        print "*** Archiving all modules"
-        with tarfile.open(output_filename, "w:gz") as tar:
-                for path in archive_paths:
-                    if os.path.exists(path):
-                        archive_name = path.split('/')[-2]
-                        tar.add(path, arcname=archive_name)
-
-        print "***OK:  %s" % output_filename
         
 
     def search(self, title=None):
@@ -370,7 +337,7 @@ if __name__ == "__main__":
 
     # valid commands
     zmm_commands = ['list','search','install','uninstall',
-                    'activate','deactivate','restart','freeze','bundle'] 
+                    'activate','deactivate','restart'] 
 
     # check for valid commands
     if not args or args[0] not in zmm_commands:
@@ -429,12 +396,6 @@ if __name__ == "__main__":
     elif command == 'uninstall':
         for module in command_args:
             zmm.uninstall(module, opts.site)
-
-    elif command == 'freeze':
-        zmm.freeze()
-
-    elif command == 'bundle':
-        zmm.bundle()
 
     elif command == 'activate':
         for module in command_args:
