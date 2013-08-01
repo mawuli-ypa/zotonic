@@ -4,7 +4,15 @@
 
 {% block content %}
 <div class="edit-header">
-    <h2>{_ Modules _}</h2>
+    <h2 class="pull-left">{_ Modules _}</h2> 
+    <div>
+    <ul class="nav nav-pills pull-right">
+        <li><a href="">Search</a></li>
+        <li><a href="">Bundle</a></li>
+        <li><a href="">Freeze</a></li>
+    </ul>
+    </div>
+<div class="clearfix"></div>
     <p>{_ Zotonic is a modular web development framework. Most functionality is encapsulated inside modules. A set of basic modules are shipped with the Zotonic distribution,
     while others are externally developed. This page shows an overview of all modules which are currently known to this Zotonic installation. _}</p>
 </div>
