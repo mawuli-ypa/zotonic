@@ -195,6 +195,11 @@ class ZMM():
 
     def activate(self, module, site):
         """ Activates a module, and its dependencies"""
+        modules = sum([d.keys() for d in self.__scan_modules().values()],[])
+        if module not in modules:
+            print "***ERROR: %s does not exist" % module
+            exit(1)
+
         if self.zotonic_call('activate',module, site):
             print "***OK %s" % module
         else:
@@ -207,6 +212,10 @@ class ZMM():
         by other modules, or not explicitly activated by Zotonic.       
 
         """
+        modules = sum([d.keys() for d in self.__scan_modules().values()],[])
+        if module not in modules:
+            print "***ERROR: %s does not exist" % module
+            exit(1)
         if self.zotonic_call('deactivate',module,site):
             print "***OK %s" % module
         else:
@@ -214,6 +223,10 @@ class ZMM():
 
     def restart(self,module,site):
         # restart modules
+        modules = sum([d.keys() for d in self.__scan_modules().values()],[])
+        if module not in modules:
+            print "***ERROR: %s does not exist" % module
+            exit(1)
         if self.zotonic_call('restart',module,site):
             print "***OK: %s" % module
         else:
@@ -326,10 +339,10 @@ if __name__ == "__main__":
         exit(os.EX_NOINPUT)
 
     if command in ['activate', 'deactivate', 'restart']:
-        if re.match(r'[A-Za-z0-9_]+', opts.site):
+        if opts.site and re.match(r'[A-Za-z0-9_]+', opts.site):
             opts.site = opts.site
         else:
-            print "***ERROR: Invalid site name: %s" % opts.site
+            print "***ERROR: Invalid site name"
             exit(os.EX_DATAERR)
             
     # toggle debug switch
@@ -388,5 +401,3 @@ if __name__ == "__main__":
     else:
         parser.print_help()
     
-    # exit
-    exit(0)
