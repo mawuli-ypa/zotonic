@@ -203,8 +203,9 @@ class ZMM():
     def deactivate(self,module,site):
         """Deactive a module
         
-        Also deactivates module dependencies that are not needed by other modules, or not explicitly activated by Zotonic.
-        
+        Also deactivates module dependencies that are not needed 
+        by other modules, or not explicitly activated by Zotonic.       
+
         """
         if self.zotonic_call('deactivate',module,site):
             print "***OK %s" % module
@@ -245,7 +246,7 @@ class ZMM():
                                os.listdir(ZMM.__SITES_DIR))
         
 
-    def search(self, query=None):
+    def search(self, query):
         """ Search for modules
         
         Searches for modules on the remote repository API which defaults to modules.zotonic.com. 
@@ -322,6 +323,7 @@ if __name__ == "__main__":
     #require command arguments
     if not command == 'list' and len(command_args) < 1:
         parser.print_help()
+        exit(os.EX_NOINPUT)
 
     if command in ['activate', 'deactivate', 'restart']:
         if re.match(r'[A-Za-z0-9_]+', opts.site):
@@ -338,13 +340,17 @@ if __name__ == "__main__":
         zmm.nodename = opts.node
 
     if command in ['list','search']:
-        query = command_args[0] if command_args else None
+        query = command_args[0] if command_args and command == 'search' else None
         modules = zmm.search(query)
-        table = [[module['title'], module['description']] for module in modules]
-    
-        print "%-25s %s" % ("Module", "Description")
-        for row in table:
-            print "%-25s  %s" % (row[0], row[1])
+        
+        if modules:
+            table = [[module['title'], module['description']] for module in modules]    
+            print "%-25s %s" % ("Module", "Description")
+            for row in table:
+                print "%-25s  %s" % (row[0], row[1])
+
+        else:
+            print "***NO MATCH FOUND"
 
     elif command == 'install':
         # update the install path if a custom install path is given
@@ -381,3 +387,6 @@ if __name__ == "__main__":
 
     else:
         parser.print_help()
+
+    # exit
+    exit(0)
