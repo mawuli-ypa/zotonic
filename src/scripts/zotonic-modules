@@ -58,7 +58,7 @@ class ZMM():
         # help message
        self.USAGE = """zmm COMMAND [OPTIONS] 
            zmm install|uninstall|activate|deactiave module1, [module2 ...] [OPTIONS] 
-           zmm freeze|bundle|search|list [OPTIONS]
+           zmm list|search SEARCH_QUERY [OPTIONS]
        """
        # debug switch
        self.debug = False
@@ -387,6 +387,6 @@ if __name__ == "__main__":
 
     else:
         parser.print_help()
-
+    
     # exit
     exit(0)
