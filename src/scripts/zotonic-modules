@@ -307,7 +307,8 @@ class ZMM():
             return True
 
 
-if __name__ == "__main__":
+def main():
+    """Main script logic"""
     zmm = ZMM()
     parser = OptionParser(usage=zmm.USAGE)
     parser.add_option('-p','--path', help='Set custom install path. Defaults to priv/modules', 
@@ -400,4 +401,7 @@ if __name__ == "__main__":
 
     else:
         parser.print_help()
-    
+
+
+if __name__ == "__main__": 
+    main()
