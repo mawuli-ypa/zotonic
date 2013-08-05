@@ -227,6 +227,7 @@ class ZMM():
         else:
             print "***ERROR restarting %s" % module
 
+
     def uninstall(self, module, site=None):
         """ Uninstall modules
         
@@ -245,15 +246,13 @@ class ZMM():
             print "*** OK: %s uninstalled from %s" % (module, site)
         else:
             print "*** ERROR: %s not found" % module
-            exit(2)       
-       
+            exit(2)              
                     
     def __scan_sites(self):
         """Scan for Zotonic sites in the install path"""
         return filter(lambda x: os.path.isdir(os.path.join(ZMM.__SITES_DIR, x)),
                                os.listdir(ZMM.__SITES_DIR))
         
-
     def search(self, query):
         """ Search for modules
         
@@ -313,6 +312,7 @@ def main():
     parser.add_option('-u','--url', help="Link to directly clone/download module", action='store')
     parser.add_option('-d','--debug', help="Enable debugging", action='store_true', dest='debug', default=zmm.debug)
     parser.add_option('-n','--node', help="Zotonic Erlang node", action='store', dest='node')
+    parser.add_option('-a','--all', help="Apply action to all Zotonic modules or modules in a specific modules via the -s/--site switch", action='store', dest='global')
 
     (opts, args) = parser.parse_args()
     zmm.ZMR_SERVER= zmm.ZMR_SERVER % opts.zmr
