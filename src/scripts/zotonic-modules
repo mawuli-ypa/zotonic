@@ -100,7 +100,12 @@ class ZMM():
         return modules
 
 
-        
+    def module_exists(self, module):
+        """Check if module exists"""
+        modules = sum([d.keys() for d in self.__scan_modules().values()],[])
+        if module not in modules:
+            print "***ERROR: %s does not exist" % module
+            exit(1)
 
     def __get_repo_url(self, repo_path):
         """Returns the url to a module's repository master branch"""
@@ -195,11 +200,7 @@ class ZMM():
 
     def activate(self, module, site):
         """ Activates a module, and its dependencies"""
-        modules = sum([d.keys() for d in self.__scan_modules().values()],[])
-        if module not in modules:
-            print "***ERROR: %s does not exist" % module
-            exit(1)
-
+        self.module_exists(module)
         if self.zotonic_call('activate',module, site):
             print "***OK %s" % module
         else:
@@ -212,10 +213,7 @@ class ZMM():
         by other modules, or not explicitly activated by Zotonic.       
 
         """
-        modules = sum([d.keys() for d in self.__scan_modules().values()],[])
-        if module not in modules:
-            print "***ERROR: %s does not exist" % module
-            exit(1)
+        self.module_exists(module)
         if self.zotonic_call('deactivate',module,site):
             print "***OK %s" % module
         else:
@@ -223,10 +221,7 @@ class ZMM():
 
     def restart(self,module,site):
         # restart modules
-        modules = sum([d.keys() for d in self.__scan_modules().values()],[])
-        if module not in modules:
-            print "***ERROR: %s does not exist" % module
-            exit(1)
+        self.module_exists(module)
         if self.zotonic_call('restart',module,site):
             print "***OK: %s" % module
         else:
@@ -386,6 +381,7 @@ def main():
     elif command == 'uninstall':
         for module in command_args:
             zmm.uninstall(module, opts.site)
+
 
     elif command == 'activate':
         for module in command_args:
