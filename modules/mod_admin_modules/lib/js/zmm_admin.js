@@ -15,7 +15,7 @@ function populate_zmr_table(){
         $.each(Window.zmr_data,function(index, data){
            columns = "<td>" + data.title + "</td>" + "<td>" + data.repository + "</td>";       
            $("#zmr_tbl_body").append("<tr>" + columns + "</tr>");
-           console.log(data);
+           //console.log(data);
          });
       });
 }
@@ -30,8 +30,22 @@ function search_zmr(){
     });
  }
 
+
+function zmm_refresh(){
+    z_growl_add("Fetching the latest the modules...");
+    $("#zmr_tbl_body").empty();
+    populate_zmr_table();
+    z_growl_add("Finished updating module list");
+}
+
 // Populate table with data from ZMR server
 // Also filter user input
 populate_zmr_table();
 search_zmr();
 
+
+
+//attach event to the refresh button
+$("button#zmr_refresh_btn").live('click', function(e){
+    zmm_refresh();
+});

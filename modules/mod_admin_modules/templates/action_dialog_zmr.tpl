@@ -3,7 +3,7 @@
   <input id="zmr_filter" type="text" placeholder="I am looking for.." class="input-xlarge float-right">
    <div class="pull-right">
 	{% button class="btn" action={dialog_close} text=_"Close" tag="a" %}
-	<button class="btn btn-primary" type="submit">{_ Refresh _} {{ catname }}</button>
+	<button class="btn btn-primary" id="zmr_refresh_btn" type="submit">{_ Refresh _}</button>
     </div>
 
 </div>
