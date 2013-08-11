@@ -1,6 +1,10 @@
-<div>
 
+<div id="zmr_tbl_menu">
   <input id="zmr_filter" type="text" placeholder="I am looking for.." class="input-xlarge float-right">
+   <div class="pull-right">
+	{% button class="btn" action={dialog_close} text=_"Close" tag="a" %}
+	<button class="btn btn-primary" type="submit">{_ Refresh _} {{ catname }}</button>
+    </div>
 
 </div>
 
@@ -13,11 +17,6 @@
  </thead>
  <tbody id="zmr_tbl_body"></tbody>
 </table>
-
-    <div class="modal-footer">
-	{% button class="btn" action={dialog_close} text=_"Cancel" tag="a" %}
-	<button class="btn btn-primary" type="submit">{_ Refresh _} {{ catname }}</button>
-    </div>
 
 <script type="text/javascript">
         /*
