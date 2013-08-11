@@ -8,44 +8,18 @@
 
 </div>
 
+
 <table class="table table-striped table-bordered table-condensed" id="zmr_tbl">
   <thead>
   <tr>
-   <td>Module</td>
-   <td>Description</td>
+   <th>Module</th>
+   <th>Description</th>
   </tr> 
  </thead>
  <tbody id="zmr_tbl_body"></tbody>
 </table>
 
-<script type="text/javascript">
-        /*
-         * todo: get zmr server from Zotonic node, 
-         * cache results 
-         * test in other browsers, especially mobile
-         * install modules: dynamic postback to server
-         * refresh data
-         * make zmr results table scrollable
-         */
-        var ZMR = "http://modules.zotonic.com/api/zmr/repositories?callback=?"
-        $.getJSON(ZMR, {},function(data){
-            Window.zmr_data = data;
-            //console.log(Window.zmr_data);
-
-        $.each(Window.zmr_data,function(index, data){
-           columns = "<td>" + data.title + "</td>" + "<td>" + data.repository + "</td>";       
-           $("#zmr_tbl_body").append("<tr>" + columns + "</tr>");
-           console.log(data);
-         });
-      });
 
 
-  $('input#zmr_filter').live('keyup', function() {
-    var rex = new RegExp($(this).val(), 'i');
-    $('#zmr_tbl tr').hide();
-        $('#zmr_tbl tr').filter(function() {
-            return rex.test($(this).text());
-        }).show();
-    });
-   
-</script>
+{% lib "css/zmm_admin.css" %}
+{% lib "js/zmm_admin.js" %}
