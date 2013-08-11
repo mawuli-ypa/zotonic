@@ -1,4 +1,3 @@
-
 #zmr_tbl thead{
   border-bottom: 1px solid #d5d5d5;
   -webkit-border-radius: 0;
@@ -6,6 +5,8 @@
           border-radius: 0;
   background-color: #eaeaea;
 }
+
+#zmr_tbl_body tr td {cursor: pointer}
 
 
 
