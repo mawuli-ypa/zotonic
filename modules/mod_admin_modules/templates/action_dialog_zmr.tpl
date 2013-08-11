@@ -4,8 +4,14 @@
 
 </div>
 
-<table class="table table-striped" id="zmr_tbl">
- 
+<table class="table table-striped table-bordered table-condensed" id="zmr_tbl">
+  <thead>
+  <tr>
+   <td>Module</td>
+   <td>Description</td>
+  </tr> 
+ </thead>
+ <tbody id="zmr_tbl_body"></tbody>
 </table>
 
     <div class="modal-footer">
@@ -29,7 +35,7 @@
 
         $.each(Window.zmr_data,function(index, data){
            columns = "<td>" + data.title + "</td>" + "<td>" + data.repository + "</td>";       
-           $("#zmr_tbl").append("<tr>" + columns + "</tr>");
+           $("#zmr_tbl_body").append("<tr>" + columns + "</tr>");
            console.log(data);
          });
       });
