@@ -17,7 +17,8 @@ rebar
 *.wmtrace
 *.swp
 *.mo
-
+.#*
+#*
 ebin/
 deps/
 
