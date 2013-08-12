@@ -16,7 +16,7 @@
    <th>Description</th>
   </tr> 
  </thead>
- <tbody id="zmm_tbl_body"></tbody>
+ <tbody id="zmm_tbl_body"><tr><td>Fecthing modules...</tr></td></tbody>
 </table>
 
 
