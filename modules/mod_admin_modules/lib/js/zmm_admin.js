@@ -43,7 +43,7 @@ function z_refresh_zmm(){
 
 function z_install_module(module){
          // triger postback notify event on the server
-         z_notify('install_module', { 
+         z_notify('install-module', { 
              z_delegate: 'mod_admin_modules', 
              title: module.title,
              repository: module.repository
@@ -107,7 +107,7 @@ $("#zmm_install_btn").live('click', function(e){
     console.log(modules);
     install_confirm_text = "<h3>These modules will be installed: </h3> <br />" + modules
     z_dialog_confirm({
-        text: text,
+        text: install_confirm_text,
         on_confirm: function(){
             $.each(Window.zmm.to_install, function(index, module){z_install_module(module)})
     }})
