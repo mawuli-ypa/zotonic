@@ -789,7 +789,7 @@ install({Name, Repository}, Context) ->
     Site = m_site:get(site, Context),
     PrivDir = z_utils:lib_dir(priv),
     SiteModulesDir = filename:join([PrivDir, "sites", Site, "modules"]),
-    ModuleDirname = SiteModulesDir ++ Site Name,
+    ModuleDirname = SiteModulesDir ++ Site ++ Name,
     case filelib:is_file(ModuleDirname) of
         true ->
             z_render:growl(?__("***ERROR: " ++ Name ++ " already installed.", Context), Context);
