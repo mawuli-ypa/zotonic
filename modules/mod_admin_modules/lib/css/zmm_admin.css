@@ -1,4 +1,4 @@
-#zmr_tbl thead{
+#zmm_tbl thead{
   border-bottom: 1px solid #d5d5d5;
   -webkit-border-radius: 0;
      -moz-border-radius: 0;
@@ -6,7 +6,8 @@
   background-color: #eaeaea;
 }
 
-#zmr_tbl_body tr td {cursor: pointer}
+#zmm_tbl_body tr td {cursor: pointer}
 
+#zmm_install_btn {display:none}
 
-
+#zmm_tbl_body tr.to_install {background-color: #E5C37E !important;}
