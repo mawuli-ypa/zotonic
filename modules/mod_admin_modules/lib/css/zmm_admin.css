@@ -5,9 +5,7 @@
           border-radius: 0;
   background-color: #eaeaea;
 }
-
 #zmm_tbl_body tr td {cursor: pointer}
-
 #zmm_install_btn {display:none}
-
 #zmm_tbl_body tr.to_install {background-color: #E5C37E !important;}
+ol#zmm_to_install{padding: 3px; list-style: decimal !important}

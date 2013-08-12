@@ -1,26 +1,29 @@
 // global module manager config
 Window.zmm = Window.zmm || {}
+Window.zmm.cache = null
 
 // function for the module manager
 function z_populate_zmm_table(){
         /*
          * Todo: get zmr server from Zotonic node? 
-         * Cache results 
          * Test in other browsers, especially mobile
          * Install modules: dynamic postback to server
          * Make zmr results table scrollable
          * Add info help button
          */
+        Window.zmm.to_install = [];
         $("#zmm_tbl_body").empty().html("Fetching modules...");
         var ZMR = "http://modules.zotonic.com/api/zmr/repositories?callback=?"
-        $.getJSON(ZMR, {},function(data){
-        $("#zmm_tbl_body").empty();
-        $.each(data,function(index, data){
-           columns = "<td>" + data.title + "</td>" + "<td>" + data.repository + "</td>";       
-           $("#zmm_tbl_body").append("<tr class='z_module_link' data-id='" + data.title + "'" + 
+        if(!Window.zmm.cache){
+           $.getJSON(ZMR, {},function(data){
+           Window.zmm.cache = data
+           $("#zmm_tbl_body").empty();
+           $.each(data,function(index, data){
+               columns = "<td>" + data.title + "</td>" + "<td>" + data.repository + "</td>";       
+               $("#zmm_tbl_body").append("<tr class='z_module_link' data-id='" + data.title + "'" + 
                                       "data-repo='" + data.repository + "'" + ">" + columns + "</tr>");
          });
-      });
+      })}
 }
 
 
@@ -103,9 +106,9 @@ $(".z_module_link").live('click', function(e){
 
 
 $("#zmm_install_btn").live('click', function(e){
-    modules = $.map(Window.zmm.to_install, function(m, i){module.title});
-    console.log(modules);
-    install_confirm_text = "<h3>These modules will be installed: </h3> <br />" + modules
+    modules = '<ol id="zmm_to_install">';
+    $.each(Window.zmm.to_install, function(i, m){ modules = modules +  '<li>' + m.title + '</li>'});
+    install_confirm_text = '<h3>These modules will be installed: </h3> <br />' + modules + "</ol>";
     z_dialog_confirm({
         text: install_confirm_text,
         on_confirm: function(){
