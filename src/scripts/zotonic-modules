@@ -225,6 +225,10 @@ class ZMM():
         else:
             module_path = os.path.join(self.INSTALL_PATH, module)
 
+        if not os.path.exists(module_path):
+            print "***ERROR: %s not found" % module
+            exit(os.EX_DATAERR)
+            
         # handle error encounted when deleting directory
         def handle_error(func, path, exec_info):
             print "*** ERROR: Failed to uninstall %s" % module
