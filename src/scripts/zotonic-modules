@@ -100,9 +100,13 @@ class ZMM():
         return modules
 
 
-    def module_exists(self, module):
+    def module_exists(self, module, site=None):
         """Check if module exists"""
-        return module in sum([d.keys() for d in self.__scan_modules().values()],[])
+        if site:
+            modules = self.__scan_modules()
+            return site in modules and module in modules[site]
+        else:
+            return module in sum([d.keys() for d in self.__scan_modules().values()],[])
         
     def __get_repo_url(self, repo_path):
         """Returns the url to a module's repository master branch"""
@@ -212,6 +216,42 @@ class ZMM():
             print "***ERROR: %s does not exist in %s" % (module, site)
             return False
         
+
+    def update_repo(self,path):
+        os.chdir(path)
+        print "Pulling latest changes from %s" % self.__get_repo_url(path)
+        cmd = "git pull origin --verbose"
+        code, signal = divmod(os.system(cmd), 1<<8)
+        if code != 0:
+            return False
+        else:
+            return True
+
+    def update(self, module, site=None):
+        """ Update a module
+
+        If site is given, the module is then assumed to be within the module's 
+        directory of the given site
+        """
+        if site:
+            if not self.module_exists(module, site):
+                print "***ERROR: %s not found in %s " % (module, site)
+                exit(os.EX_DATAERR)
+            if self.update_repo(os.path.join(self.SITES_DIR, site, 'modules', module)):
+                print "OK: %s in %s updated" % (module, site)
+            else:
+                print "***ERROR: Could not update %s" % module
+                exit(os.EX_DATAERR)
+        else:
+            if not self.module_exists(module):
+                print "***ERROR: %s not found" % module
+                exit(os.EX_DATAERR)
+            if self.update_repo(os.path.join(self.INSTALL_PATH, module)):
+                print "OK: %s updated" % module
+            else:
+                print "***ERROR: Could not update %s" % module
+                exit(os.EX_DATAERR)
+            
     def uninstall(self, module, site=None):
         """ Uninstall modules
 
@@ -313,7 +353,7 @@ def main():
 
     # valid commands
     zmm_commands = ['list','search','install','uninstall',
-                    'activate','deactivate','restart']
+                    'activate','deactivate','restart','update']
 
     # check for valid commands
     if not args or args[0] not in zmm_commands:
@@ -385,6 +425,10 @@ def main():
 
         # update server to effect changes
         zmm.update_zotonic()
+
+    elif command == 'update':
+        for command in command_args:
+            zmm.update(command, opts.site)
         
     else:
         parser.print_help()
