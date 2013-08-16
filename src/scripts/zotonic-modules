@@ -102,11 +102,8 @@ class ZMM():
 
     def module_exists(self, module):
         """Check if module exists"""
-        modules = sum([d.keys() for d in self.__scan_modules().values()],[])
-        if module not in modules:
-            print "***ERROR: %s does not exist" % module
-            exit(1)
-
+        return module in sum([d.keys() for d in self.__scan_modules().values()],[])
+        
     def __get_repo_url(self, repo_path):
         """Returns the url to a module's repository master branch"""
         if os.path.exists(os.path.join(repo_path,'.git')):
@@ -198,56 +195,45 @@ class ZMM():
         else:
             return True
 
-    def activate(self, module, site):
-        """ Activates a module, and its dependencies"""
-        self.module_exists(module)
-        if self.zotonic_call('activate',module, site):
-            print "***OK %s" % module
-        else:
-            print "***ERROR activating %s" % module
+    def run_zotonic_cmd(self, command, module, site):
+        """Runs zotonic module related methods on the zotonic node
 
-    def deactivate(self,module,site):
-        """Deactive a module
-
-        Also deactivates module dependencies that are not needed
-        by other modules, or not explicitly activated by Zotonic.
-
+        Commands accepted: restart, activate, and deactiavte.
+        @todo: activate, deactiavate, restart module dependencies 
         """
-        self.module_exists(module)
-        if self.zotonic_call('deactivate',module,site):
-            print "***OK %s" % module
+        if self.module_exists(module):
+            if self.zotonic_call(command, module, site):
+                print "***OK: %s" % module
+                return True
+            else:
+                print "***ERROR: Could not %s %s" % (module, site)
+                return False                
         else:
-            print "***ERROR deactivating %s" % module
-
-    def restart(self,module,site):
-        # restart modules
-        self.module_exists(module)
-        if self.zotonic_call('restart',module,site):
-            print "***OK: %s" % module
-        else:
-            print "***ERROR restarting %s" % module
-
-
+            print "***ERROR: %s does not exist in %s" % (module, site)
+            return False
+        
     def uninstall(self, module, site=None):
         """ Uninstall modules
 
         Deactivates and deletes a mdoule
-
         """
         import shutil
-        if site in self.__scan_sites():
-            module_path = os.path.join(self.SITES_DIR, site,'modules', module)
+        if site and site in self.__scan_sites():
+            module_path = os.path.join(self.SITES_DIR, site, 'modules', module)
+            # deactivate module and delete module directory
+            self.run_zotonic_cmd('deactivate', module, site)    
         else:
             module_path = os.path.join(self.INSTALL_PATH, module)
-        # deactivate module and delete module directory
-        if os.path.exists(module_path):
-            self.zotonic_call('deactivate', module, site)
-            shutil.rmtree(module_path)
-            print "*** OK: %s uninstalled from %s" % (module, site)
-        else:
-            print "*** ERROR: %s not found" % module
+
+        # handle error encounted when deleting directory
+        def handle_error(func, path, exec_info):
+            print "*** ERROR: Failed to uninstall %s" % module
             exit(2)
 
+        shutil.rmtree(module_path, False, handle_error)
+        print "*** OK: %s uninstalled" % module
+        return True
+        
     def __scan_sites(self):
         """Scan for Zotonic sites in the install path"""
         return filter(lambda x: os.path.isdir(os.path.join(ZMM.SITES_DIR, x)),
@@ -258,7 +244,6 @@ class ZMM():
 
         Searches for modules on the remote repository API which defaults to modules.zotonic.com.
         The response can be filtered or by module name/title match.
-
         """
         print "Getting module index"
         try:
@@ -269,7 +254,12 @@ class ZMM():
             print "Parse error while getting module list from " + self.ZMR_SERVER
             exit(os.EX_DATAERR)
 
-    def zotonic_call(self,function,args,site):
+    def update_zotonic(self):
+        print "Updating Zotonic..."
+        os.system("make compile-zotonic")
+        os.system("%s update" % os.path.join(os.environ["ZOTONIC_BIN"], "zotonic"))
+            
+    def zotonic_call(self, function, args, site):
         """Make a call to the Zotonic node
 
         Passes an erlang expression to the $ERL_CALL environment variable.
@@ -334,12 +324,10 @@ def main():
         parser.print_help()
         exit(os.EX_NOINPUT)
 
-    if command in ['activate', 'deactivate', 'restart']:
-        if opts.site and re.match(r'[A-Za-z0-9_]+', opts.site):
-            opts.site = opts.site
-        else:
-            print "***ERROR: Invalid site name"
-            exit(os.EX_DATAERR)
+    # require sitename for certain commands
+    if command in ['activate','deactivate','restart'] and not opts.site:
+        print "ERROR: please provide a site name"
+        exit(os.EX_DATAERR)
 
     # toggle debug switch
     zmm.debug = opts.debug
@@ -380,26 +368,20 @@ def main():
 
         # install ok
         if ok:
-            os.system("make compile-zotonic")
-            os.system("%s update" % os.path.join(os.environ["ZOTONIC_BIN"], "zotonic"))
+            zmm.update_zotonic()
+    
+    elif command in ['activate', 'deactivate', 'restart']:
+        for module in command_args:
+            zmm.run_zotonic_cmd(command, module, opts.site)           
 
     elif command == 'uninstall':
+        site = opts.site if opts.site else None
         for module in command_args:
-            zmm.uninstall(module, opts.site)
+            zmm.uninstall(module, site)
 
-
-    elif command == 'activate':
-        for module in command_args:
-            zmm.activate(module, opts.site)
-
-    elif command == 'deactivate':
-        for module in command_args:
-            zmm.deactivate(module, opts.site)
-
-    elif command == 'restart':
-        for module in command_args:
-            zmm.restart(module, opts.site)
-
+        # update server to effect changes
+        zmm.update_zotonic()
+        
     else:
         parser.print_help()
 
