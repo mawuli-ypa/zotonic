@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python
 #
 # Copyright 2013 Mawuli Adzaku <mawuli@mawuli.me>
@@ -133,7 +132,7 @@ class ZMM():
         if direct_link:
             return self.__direct_download(modulename, direct_link)
         else:    
-            info  = [mod for mod in self.search()  if mod['title'] == modulename]
+            info  = [mod for mod in self.search(modulename)  if mod['title'] == modulename]
             if not info:
                 print "** Module not found:", modulename
                 return False
