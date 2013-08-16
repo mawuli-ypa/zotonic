@@ -29,7 +29,8 @@
 %% interface functions
 -export([
     all/1,
-    observe_admin_menu/3
+    observe_admin_menu/3,
+    event/2
 ]).
 
 -include("zotonic.hrl").
@@ -91,3 +92,8 @@ observe_admin_menu(admin_menu, Acc, Context) ->
      
      |Acc].
 
+
+event(#postback_notify{message="install-module"}, Context) ->
+    Title = z_context:get_q("title", Context),
+    Repository = z_context:get_q("repository", Context),
+    z_render:growl(?__("Installing " ++ Title, Context),"warning", true, Context).

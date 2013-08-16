@@ -3,10 +3,14 @@
 {% block title %}{_ Modules _}{% endblock %}
 
 {% block content %}
+
 <div class="edit-header">
     <h2>{_ Modules _}</h2>
     <p>{_ Zotonic is a modular web development framework. Most functionality is encapsulated inside modules. A set of basic modules are shipped with the Zotonic distribution,
     while others are externally developed. This page shows an overview of all modules which are currently known to this Zotonic installation. _}</p>
+
+{% button class="btn btn-primary pull-right" text="Install modules" 
+action={dialog_open title="Zotonic Module Repository" template="action_dialog_zmr.tpl"} %}
 </div>
 
 <div {% include "_language_attrs.tpl" language=`en` %}>

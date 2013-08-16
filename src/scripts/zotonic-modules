@@ -1,0 +1,403 @@
+#!/usr/bin/env python
+#
+# Copyright 2013 Mawuli Adzaku <mawuli@mawuli.me>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+#
+# Zotonic CLI for managing modules. Modules are by default pulled from modules.zotonic.com
+#
+# Usage:
+# $ bin/zmm COMMAND [OPTIONS]
+# $ bin/zmm --help
+#
+
+
+# version
+__version__ = "0.1.0"
+
+import os
+import sys
+import urllib
+import re
+import subprocess
+from urlparse import urlparse
+from optparse import OptionParser
+
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
+class ZMM():
+    """Zotonic Module Manager
+
+    This class holds all functions needed to install, uninstall, activate, deactivate,
+    restart, bundle and freeze Zotonic modules. It also exports a function for searching
+    for modules on the remote repositories. The default modules repository is http://modules.zotonic.com
+
+    """
+    ZMR_SERVER = 'http://%s/api/zmr/repositories'
+    INSTALL_PATH = os.path.join(os.environ['ZOTONIC'], 'priv','modules')
+    __SITES_DIR = os.path.join(os.environ['ZOTONIC'],'priv','sites')
+    __BASE_MODULE_PATH = os.path.join(os.environ['ZOTONIC'], 'modules')
+    __SUPPORTED_SCMS =  ["hg", "git"]
+
+    def __init__(self):
+        # help message
+       self.USAGE = """zmm COMMAND [OPTIONS]
+           zmm install|uninstall|activate|deactiave module1, [module2 ...] [OPTIONS]
+           zmm list|search SEARCH_QUERY [OPTIONS]
+       """
+       # debug switch
+       self.debug = False
+       self.nodename = os.environ['NODENAME']
+
+    def __scan_modules(self):
+        """Scan for modules
+
+        Looks for modules in the shared modules dircectory and the
+        various site specific module directories in the
+
+        """
+        import glob
+
+        # dictionary to hold all Zotonic modules
+        modules = {}
+        shared_modules =  glob.glob(os.path.join(ZMM.INSTALL_PATH,'mod_*'))
+
+        # get remote repository links
+        modules['priv'] = {}
+        for (modulename,modulepath) in [(os.path.basename(module),module) for module in shared_modules]:
+            # get the repo's remote url
+            modules['priv'][modulename] = {'path': modulepath ,'url': self.__get_repo_url(modulepath)}
+
+        zotonic_sites = self.__scan_sites()
+        for site in zotonic_sites:
+            if site not in modules:
+                modules[site] = {}
+            site_modules = glob.glob(os.path.join(ZMM.__SITES_DIR, site,"modules/mod_*"))
+
+            # get remote repository links
+            for (modulename,modulepath) in [(os.path.basename(module),module) for module in site_modules]:
+                scm = 'git' if os.path.exists(os.path.join(modulepath,'.git')) else 'hg'
+                # get the repo's remote url
+                modules[site][modulename] = {'path': modulepath,
+                                             'url': self.__get_repo_url(modulepath),
+                                             'scm':scm}
+
+        return modules
+
+
+    def module_exists(self, module):
+        """Check if module exists"""
+        modules = sum([d.keys() for d in self.__scan_modules().values()],[])
+        if module not in modules:
+            print "***ERROR: %s does not exist" % module
+            exit(1)
+
+    def __get_repo_url(self, repo_path):
+        """Returns the url to a module's repository master branch"""
+        if os.path.exists(os.path.join(repo_path,'.git')):
+            # repository is a Git repo
+            cmd = 'cd %s  && git remote -v | grep fetch | cut -f 2 | cut -d " " -f 1 ' % repo_path
+            return subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE).stdout.read().rstrip()
+        else:
+            # todo: how to get Mercurial/hg repo remote url
+            return None
+
+
+    def install(self, modulename, direct_link = False):
+        """Install a module
+
+        Usage:
+        zmm install mod_abc --url https://github.com/zotonic/mod_abc
+        """
+        if not re.match("^mod_[a-z_]+$", modulename):
+            # fixme - valid module name
+            print "** Invalid module name:", modulename
+            return False
+
+        if direct_link:
+            return self.__direct_download(modulename, direct_link)
+        else:
+            info  = [mod for mod in self.search()  if mod['title'] == modulename]
+            if not info:
+                print "** Module not found:", modulename
+                return False
+            info = info[0]
+
+            # clone repository now
+            if self.__clone_repo(modulename, info['repository'], info['scm']):
+                print "**", modulename, "OK"
+                return True
+
+
+    def __direct_download(self, modulename, download_link):
+        """Downloads a module packaged as a tarfile"""
+        if download_link.endswith('.tar.gz'):
+            print "*** Downloaidng %s from %s " % (modulename, download_link)
+            f = urllib.urlopen(download_link)
+            if f.code == 200:
+                extract_path = os.path.join(ZMM.INSTALL_PATH, module_name)
+                try:
+                    tar = tarfile.open(StringIO(f.read()))
+                    tar.extractall(extract_path)
+                    tar.close()
+                except:
+                    print "*** Error extracting %s to %s" % (modulename, extract_path)
+                    exit(os.EX_NOPERM)
+        else: # non-archive link
+            # todo: detect SCM given only the remote repository link
+            for scm in ZMM.__SUPPORTED_SCMS:
+                # clone repository
+                if self.__clone_repo(modulename,download_link, scm):
+                    print "***", modulename, "OK"
+                    return True
+
+
+    def __clone_repo(self, modulename, repository, scm, path=None):
+        """Clone a remote SCM repository"""
+        clonepath = path if path else os.path.join(ZMM.INSTALL_PATH, modulename)
+        if os.path.exists(clonepath):
+            print "** %s already installed at %s" % (modulename, clonepath)
+            return False
+
+        if os.path.exists(os.path.join(ZMM.__BASE_MODULE_PATH, modulename)):
+            print "** Module already exists in zotonic core:", clonepath
+            return False
+
+        if repository:
+            pieces = urlparse(repository)
+            # check URL scheme and validate url
+            if  not all([pieces.scheme, pieces.netloc]) or pieces.scheme not in ['http', 'https', 'git', 'ssh']:
+                print "** Module has no valid repository URL"
+                return False
+
+        if scm not in ZMM.__SUPPORTED_SCMS:
+            print "** Module has unsupported/unknown SCM: %s", scm
+            return False
+
+        print "** Installing", modulename,"..."
+
+        cmd = "%s clone %s %s" % (scm, repository, clonepath)
+        code, signal = divmod(os.system(cmd), 1<<8)
+        if code != 0:
+            return False
+        else:
+            return True
+
+    def activate(self, module, site):
+        """ Activates a module, and its dependencies"""
+        self.module_exists(module)
+        if self.zotonic_call('activate',module, site):
+            print "***OK %s" % module
+        else:
+            print "***ERROR activating %s" % module
+
+    def deactivate(self,module,site):
+        """Deactive a module
+
+        Also deactivates module dependencies that are not needed
+        by other modules, or not explicitly activated by Zotonic.
+
+        """
+        self.module_exists(module)
+        if self.zotonic_call('deactivate',module,site):
+            print "***OK %s" % module
+        else:
+            print "***ERROR deactivating %s" % module
+
+    def restart(self,module,site):
+        # restart modules
+        self.module_exists(module)
+        if self.zotonic_call('restart',module,site):
+            print "***OK: %s" % module
+        else:
+            print "***ERROR restarting %s" % module
+
+
+    def uninstall(self, module, site=None):
+        """ Uninstall modules
+
+        Deactivates and deletes a mdoule
+
+        """
+        import shutil
+        if site in self.__scan_sites():
+            module_path = os.path.join(self.__SITES_DIR, site,'modules', module)
+        else:
+            module_path = os.path.join(self.INSTALL_PATH, module)
+        # deactivate module and delete module directory
+        if os.path.exists(module_path):
+            self.zotonic_call('deactivate', module, site)
+            shutil.rmtree(module_path)
+            print "*** OK: %s uninstalled from %s" % (module, site)
+        else:
+            print "*** ERROR: %s not found" % module
+            exit(2)
+
+    def __scan_sites(self):
+        """Scan for Zotonic sites in the install path"""
+        return filter(lambda x: os.path.isdir(os.path.join(ZMM.__SITES_DIR, x)),
+                               os.listdir(ZMM.__SITES_DIR))
+
+    def search(self, query):
+        """ Search for modules
+
+        Searches for modules on the remote repository API which defaults to modules.zotonic.com.
+        The response can be filtered or by module name/title match.
+
+        """
+        print "Getting module index"
+        try:
+            url = self.ZMR_SERVER + '?q=%s' % query if query else self.ZMR_SERVER
+            fp = urllib.urlopen(url)
+            return json.loads(fp.read())
+        except:
+            print "Parse error while getting module list from " + self.ZMR_SERVER
+            exit(os.EX_DATAERR)
+
+    def zotonic_call(self,function,args,site):
+        """Make a call to the Zotonic node
+
+        Passes an erlang expression to the $ERL_CALL environment variable.
+        The expression is a call to z_module_manager. The z_module_mamanger method to call,
+        argumnents, and the affected site are passed to this function.
+        """
+        #todo: activate module in all sites if no site is given
+        Expression = """
+        Context = z:c(%s),
+        Response = z_module_manager:%s(%s, Context),
+        Response.
+        """ % (site, function, args)
+
+        # replace the nodename in the $ZOTONIC_CALL ENVIRONMENT
+        # variable with custom nodename
+        # So, if the value of $ZOTONIC_CALL is
+        # '/home/mawuli/dev/erlang/r15b01/lib/erl_interface-3.7.7/bin/erl_call -sname zotonic001@milkshake'
+        # find the firt occurrence of space and grab that part as the path to erl_call,
+        # and piece in the $NAME_ARG and finall add the custom nodename supplied via the -n switch
+        # All this could be made simpler, if the $ERL_CALL variable is exported
+        z_call = os.environ['ZOTONIC_CALL']
+        erl_call = z_call[:z_call.find(' ')] + ' '
+        z_call = erl_call + os.environ['NAME_ARG'] + " %s@$NODEHOST" % self.nodename
+        run_cmd = 'echo "%s" | %s -e' if self.debug else 'echo "%s" | %s -e  > /dev/null 2>&1'
+        code, signal =  divmod(os.system(run_cmd % (Expression, z_call)),1<<8)
+        if code != 0:
+            return False
+        else:
+            return True
+
+
+def main():
+    """Main script logic"""
+    zmm = ZMM()
+    parser = OptionParser(usage=zmm.USAGE)
+    parser.add_option('-p','--path', help='Set custom install path. Defaults to priv/modules',
+                      dest='path', default=zmm.INSTALL_PATH)
+    parser.add_option("-z", "--zmr", help="Zotonic modules repository", dest='zmr',default='modules.zotonic.com')
+    parser.add_option("-s", "--site", help="Affected Zotonic site", dest='site')
+    parser.add_option('-u','--url', help="Link to directly clone/download module", action='store')
+    parser.add_option('-d','--debug', help="Enable debugging", action='store_true', dest='debug', default=zmm.debug)
+    parser.add_option('-n','--node', help="Zotonic Erlang node", action='store', dest='node')
+    parser.add_option('-a','--all', help="Apply action server-wide or site-wide via the -s/--site switch", action='store', dest='global')
+
+    (opts, args) = parser.parse_args()
+    zmm.ZMR_SERVER= zmm.ZMR_SERVER % opts.zmr
+
+    # valid commands
+    zmm_commands = ['list','search','install','uninstall',
+                    'activate','deactivate','restart']
+
+    # check for valid commands
+    if not args or args[0] not in zmm_commands:
+        parser.print_help()
+        exit(os.EX_NOINPUT)
+
+    command = args[0]
+    command_args = args[1:]
+
+    #require command arguments
+    if not command == 'list' and len(command_args) < 1:
+        parser.print_help()
+        exit(os.EX_NOINPUT)
+
+    if command in ['activate', 'deactivate', 'restart']:
+        if opts.site and re.match(r'[A-Za-z0-9_]+', opts.site):
+            opts.site = opts.site
+        else:
+            print "***ERROR: Invalid site name"
+            exit(os.EX_DATAERR)
+
+    # toggle debug switch
+    zmm.debug = opts.debug
+
+    # affected Zotonic node
+    if opts.node:
+        zmm.nodename = opts.node
+
+    if command in ['list','search']:
+        query = command_args[0] if command_args and command == 'search' else None
+        modules = zmm.search(query)
+
+        if modules:
+            table = [[module['title'], module['description']] for module in modules]
+            print "%-25s %s" % ("Module", "Description")
+            for row in table:
+                print "%-25s  %s" % (row[0], row[1])
+
+        else:
+            print "***NO MATCH FOUND"
+
+    elif command == 'install':
+        # update the install path if a custom install path is given
+        if opts.path and os.path.exists(opts.path):
+            ZMM.INSTALL_PATH = opts.path
+
+        ok = False
+        if opts.url: #directly install from url
+            ok = zmm.install(command_args[0],opts.url)
+        elif command_args:
+            for module in command_args:
+                ok = zmm.install(module)
+
+        # install ok
+        if ok:
+            os.system("make compile-zotonic")
+            os.system("%s update" % os.path.join(os.environ["ZOTONIC_BIN"], "zotonic"))
+
+    elif command == 'uninstall':
+        for module in command_args:
+            zmm.uninstall(module, opts.site)
+
+
+    elif command == 'activate':
+        for module in command_args:
+            zmm.activate(module, opts.site)
+
+    elif command == 'deactivate':
+        for module in command_args:
+            zmm.deactivate(module, opts.site)
+
+    elif command == 'restart':
+        for module in command_args:
+            zmm.restart(module, opts.site)
+
+    else:
+        parser.print_help()
+
+
+if __name__ == "__main__":
+    main()
