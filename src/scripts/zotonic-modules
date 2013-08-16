@@ -50,7 +50,7 @@ class ZMM():
     """
     ZMR_SERVER = 'http://%s/api/zmr/repositories'
     INSTALL_PATH = os.path.join(os.environ['ZOTONIC'], 'priv','modules')
-    __SITES_DIR = os.path.join(os.environ['ZOTONIC'],'priv','sites')
+    SITES_DIR = os.path.join(os.environ['ZOTONIC'],'priv','sites')
     __BASE_MODULE_PATH = os.path.join(os.environ['ZOTONIC'], 'modules')
     __SUPPORTED_SCMS =  ["hg", "git"]
 
@@ -87,7 +87,7 @@ class ZMM():
         for site in zotonic_sites:
             if site not in modules:
                 modules[site] = {}
-            site_modules = glob.glob(os.path.join(ZMM.__SITES_DIR, site,"modules/mod_*"))
+            site_modules = glob.glob(os.path.join(ZMM.SITES_DIR, site,"modules/mod_*"))
 
             # get remote repository links
             for (modulename,modulepath) in [(os.path.basename(module),module) for module in site_modules]:
@@ -236,7 +236,7 @@ class ZMM():
         """
         import shutil
         if site in self.__scan_sites():
-            module_path = os.path.join(self.__SITES_DIR, site,'modules', module)
+            module_path = os.path.join(self.SITES_DIR, site,'modules', module)
         else:
             module_path = os.path.join(self.INSTALL_PATH, module)
         # deactivate module and delete module directory
@@ -250,8 +250,8 @@ class ZMM():
 
     def __scan_sites(self):
         """Scan for Zotonic sites in the install path"""
-        return filter(lambda x: os.path.isdir(os.path.join(ZMM.__SITES_DIR, x)),
-                               os.listdir(ZMM.__SITES_DIR))
+        return filter(lambda x: os.path.isdir(os.path.join(ZMM.SITES_DIR, x)),
+                               os.listdir(ZMM.SITES_DIR))
 
     def search(self, query):
         """ Search for modules
@@ -366,6 +366,11 @@ def main():
         if opts.path and os.path.exists(opts.path):
             ZMM.INSTALL_PATH = opts.path
 
+        if opts.site:
+            site_modules_dir = os.path.join(zmm.SITES_DIR, opts.site, "modules")
+            if os.path.exists(site_modules_dir):
+                ZMM.INSTALL_PATH = site_modules_dir
+                
         ok = False
         if opts.url: #directly install from url
             ok = zmm.install(command_args[0],opts.url)
