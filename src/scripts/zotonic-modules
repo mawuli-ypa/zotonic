@@ -131,12 +131,12 @@ class ZMM():
             return False
 
         # update the install path if a custom install path is given
-        if path and os.path.exists(path):
-            self.INSTALL_PATH = path
-        elif site:
+        if site:
             site_modules_dir = os.path.join(self.SITES_DIR, site, "modules")
             if os.path.exists(site_modules_dir):
                 self.INSTALL_PATH = site_modules_dir
+        elif path and os.path.exists(path):
+            self.INSTALL_PATH = path
                 
         if direct_link:
             return self.__direct_download(modulename, direct_link)
