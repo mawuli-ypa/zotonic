@@ -218,7 +218,7 @@ class ZMM():
                 print "***OK: %s %s" % (command, module)
                 return True
             else:
-                print "***ERROR: Could not %s %s" % (module, site)
+                print "***ERROR: Could not %s %s" % (command, module)
                 return False                
         else:
             print "***ERROR: %s does not exist in %s" % (module, site)
