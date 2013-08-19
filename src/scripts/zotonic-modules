@@ -354,7 +354,6 @@ def main():
     parser.add_option('-u','--url', help="Link to directly clone/download module", action='store')
     parser.add_option('-d','--debug', help="Enable debugging", action='store_true', dest='debug', default=zmm.debug)
     parser.add_option('-n','--node', help="Zotonic Erlang node", action='store', dest='node')
-    parser.add_option('-a','--all', help="Apply action server-wide or site-wide via the -s/--site switch", action='store', dest='global')
 
     (opts, args) = parser.parse_args()
     zmm.ZMR_SERVER= zmm.ZMR_SERVER % opts.zmr
