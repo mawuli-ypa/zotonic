@@ -54,7 +54,8 @@
     title/1,
     add_observers/3,
     remove_observers/3,
-    reinstall/2
+    reinstall/2,
+    install/2
 ]).
 
 -include_lib("zotonic.hrl").
@@ -785,8 +786,8 @@ reinstall(Module, Context) ->
 
 
 %% @doc Install the given module
-install({Name, Repository}, Context) ->
-    Site = m_site:get(site, Context),
+install({Name, _Repository}, Context) ->
+    Site = erlang:atom_to_list(m_site:get(host, Context)),
     PrivDir = z_utils:lib_dir(priv),
     SiteModulesDir = filename:join([PrivDir, "sites", Site, "modules"]),
     ModuleDirname = SiteModulesDir ++ Site,
@@ -794,8 +795,9 @@ install({Name, Repository}, Context) ->
         true ->
             z_render:growl(?__("***ERROR: " ++ Name ++ " already installed.", Context), Context);
         false ->
-             ZMM = filename:join([PrivDir, "bin", "zmm"]),
-             CMD = ZMM ++ " install -s " ++ Site,
-             os:cmd(CMD),
-             z_render:growl(?__(Name ++ " successfully installed.", Context), Context)
+             ZMM = filename:join(['bin', 'zmm']),
+             CMD = ZMM ++ " install " ++ Name ++ " -s " ++ Site,
+             ?DEBUG(CMD),
+	     Pid = spawn(fun() -> os:cmd(CMD) end),
+             z_render:growl(Name ++ " successfully installed.", Context)
      end.

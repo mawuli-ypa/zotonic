@@ -94,6 +94,7 @@ observe_admin_menu(admin_menu, Acc, Context) ->
 
 
 event(#postback_notify{message="install-module"}, Context) ->
-    Title = z_context:get_q("title", Context),
+    Module = z_context:get_q("title", Context),
     Repository = z_context:get_q("repository", Context),
-    z_render:growl(?__("Installing " ++ Title, Context),"warning", true, Context).
+    z_module_manager:install({Module, Repository}, Context),
+    z_render:growl(?__("Installing " ++ Module, Context),"warning", true, Context).
