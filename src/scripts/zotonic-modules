@@ -199,14 +199,21 @@ class ZMM():
             return False
 
         print "** Installing", modulename,"..."
-
-        cmd = "%s clone %s %s" % (scm, repository, clonepath)
-        code, signal = divmod(os.system(cmd), 1<<8)
-        if code != 0:
-            return False
+        if self.cmd_exists(scm):
+            cmd = "%s clone %s %s" % (scm, repository, clonepath)
+            code, signal = divmod(os.system(cmd), 1<<8)
+            if code != 0:
+                return False
+            else:
+                return True
         else:
-            return True
-
+            print "***ERROR: please install %s and try again" % scm
+            exit(1)
+            
+    def cmd_exists(self, cmd):
+        return subprocess.call("type " + cmd, shell=True, 
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
+            
     def run_zotonic_cmd(self, command, module, site):
         """Runs zotonic module related methods on the zotonic node
 
