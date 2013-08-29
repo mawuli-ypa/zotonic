@@ -94,7 +94,13 @@ observe_admin_menu(admin_menu, Acc, Context) ->
 
 
 event(#postback_notify{message="install-module"}, Context) ->
-    Module = z_context:get_q("title", Context),
-    Repository = z_context:get_q("repository", Context),
-    z_module_manager:install({Module, Repository}, Context),
-    z_render:growl(?__("Installing " ++ Module, Context),"warning", true, Context).
+    Module = z_context:get_q("module", Context),
+    case z_module_manager:install(Module, Context) of
+	{error, {already_exists, Module}} ->
+  	    z_render:growl_error(?__(Module ++ " is already installed.", Context), Context);
+        {ok, Module} ->
+	    z_render:growl("Installing " ++ Module, Context);
+	_Error ->
+	   z_render:growl_error(?__("Failed to install" ++ Module, Context), Context)   
+    end.
+
