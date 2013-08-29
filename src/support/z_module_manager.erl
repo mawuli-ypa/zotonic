@@ -55,7 +55,8 @@
     add_observers/3,
     remove_observers/3,
     reinstall/2,
-    install/2
+    install/2,
+    exec_zmm/1
 ]).
 
 -include_lib("zotonic.hrl").
@@ -785,19 +786,45 @@ reinstall(Module, Context) ->
     end.
 
 
-%% @doc Install the given module
-install({Name, _Repository}, Context) ->
+%% @doc Install a Zotonic module in current site modules directory
+%% @spec install(list(), #context{}) ->
+%%   {error, {already_ecists, list()}} | {ok, list()} | {error, list()}
+install(Module, Context) ->
     Site = erlang:atom_to_list(m_site:get(host, Context)),
     PrivDir = z_utils:lib_dir(priv),
     SiteModulesDir = filename:join([PrivDir, "sites", Site, "modules"]),
-    ModuleDirname = SiteModulesDir ++ Site,
+    %% @TODO: use platform-independent path separator
+    ModuleDirname = SiteModulesDir ++ "/" ++ Module,
     case filelib:is_file(ModuleDirname) of
         true ->
-            z_render:growl(?__("***ERROR: " ++ Name ++ " already installed.", Context), Context);
+            {error, {already_exists, Module}};
         false ->
-             ZMM = filename:join(['bin', 'zmm']),
-             CMD = ZMM ++ " install " ++ Name ++ " -s " ++ Site,
-             ?DEBUG(CMD),
-	     Pid = spawn(fun() -> os:cmd(CMD) end),
-             z_render:growl(Name ++ " successfully installed.", Context)
+            ZMM = filename:join(['bin', 'zmm']),
+            CMD = ZMM ++ " install " ++ Module ++ " -s " ++ Site,
+            erlang:spawn(z_module_manager, exec_zmm, [CMD]),
+	    {ok, Module}
      end.
+	    	
+
+%% @doc Execute external shell command.
+%% Command is run in a separate process/space.
+%% @spec exec_zmm(iolist())-> iolist() | throw
+exec_zmm(Cmd) ->
+    cmd(Cmd, 30000).
+	
+cmd(Cmd, Timeout) ->
+    Port = erlang:open_port({spawn, Cmd},[exit_status]),
+    loop(Port,[], Timeout).
+	
+loop(Port, Data, Timeout) ->
+    receive
+	{Port, {data, NewData}} ->
+	    loop(Port, Data++NewData, Timeout);
+	{Port, {exit_status, 0}} ->
+	    {done, Data};
+	{Port, {exit_status, S}} ->
+	    throw({cmd_failed, S})
+	after Timeout ->
+	    throw(timeout)
+    end.
+
