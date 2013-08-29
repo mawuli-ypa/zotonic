@@ -1,31 +1,64 @@
 // global module manager config
-Window.zmm = Window.zmm || {}
-Window.zmm.cache = null
+Window.zmm = Window.zmm || {};
+Window.zmm.cache = null;
+
+// paginate zmm table
+function z_paginate_table(){
+    var currentPage = 0;
+    var numPerPage = 15;
+    var $table = $('#zmm_tbl');
+    $table.bind('repaginate', function() {
+        $table.find('tbody tr')
+	.hide()
+	.slice(currentPage * numPerPage, (currentPage + 1) * numPerPage)
+	.show();
+    });
+    $table.trigger('repaginate');
+    var numRows = $table.find('tbody tr').length;
+    var numPages = Math.ceil(numRows / numPerPage);
+    var $pager = $('#zmm_tbl_pager');
+    var $page_ul = $("<ul></ul>");
+    for (var page = 0; page < numPages; page++) {
+        $('<li></li>').append($('<a></a>').text(page + 1).bind('click', {
+            newPage: page
+        }, function(event) {
+            currentPage = event.data['newPage'];
+            $table.trigger('repaginate');
+            $(this).parent().addClass('active');
+	    $(this).parent().siblings().removeClass('active');
+        })).appendTo($page_ul);
+    }
+    $pager.empty();
+    $page_ul.appendTo($pager);
+    $pager.find('#zmm_tbl div.pagination ul li:first')
+	  .addClass('active');
+};
 
 // function for the module manager
 function z_populate_zmm_table(){
         /*
-         * Todo: get zmr server from Zotonic node? 
-         * Test in other browsers, especially mobile
-         * Install modules: dynamic postback to server
-         * Make zmr results table scrollable
-         * Add info help button
+         * @todo: Test in other browsers, especially mobile
          */
         Window.zmm.to_install = [];
         $("#zmm_tbl_body").empty().html("Fetching modules...");
         var ZMR = "http://modules.zotonic.com/api/zmr/repositories?callback=?"
-        if(!Window.zmm.cache){
-           $.getJSON(ZMR, {},function(data){
-           Window.zmm.cache = data
-           $("#zmm_tbl_body").empty();
-           $.each(data,function(index, data){
-               columns = "<td>" + data.title + "</td>" + "<td>" + data.repository + "</td>";       
-               $("#zmm_tbl_body").append("<tr class='z_module_link' data-id='" + data.title + "'" + 
+        $.getJSON(ZMR, {},function(data){
+            Window.zmm.cache = data
+            $("#zmm_tbl_body").empty();
+            $.each(data,function(index, data){
+                columns = "<td>" + data.title + "</td>" + "<td>" + data.repository + "</td>";       
+                $("#zmm_tbl_body").append("<tr class='z_module_link' data-id='" + data.title + "'" + 
                                       "data-repo='" + data.repository + "'" + ">" + columns + "</tr>");
-         });
-      })}
+          });
+	    z_paginate_table();
+        });
+        // paginate table
+        //$.event.trigger({type: "zmm_tbl_load"});
+ 
 }
 
+
+//$(document).on('zmm_tbl_load', function(){alert('hi')})
 
 function z_filter_zmm_table(){
   $('input#zmm_filter').live('keyup', function() {
@@ -40,7 +73,6 @@ function z_filter_zmm_table(){
 
 function z_refresh_zmm(){
     z_growl_add("Fetching the latest the modules...");
-    $("#zmm_tbl_body").empty();
     z_populate_zmm_table();
 }
 
@@ -48,8 +80,8 @@ function z_install_module(module){
          // triger postback notify event on the server
          z_notify('install-module', { 
              z_delegate: 'mod_admin_modules', 
-             title: module.title,
-             repository: module.repository
+             module: module.title
+             //repository: module.repository
      });
 }
 
@@ -67,6 +99,7 @@ function z_zmm_unqueue_install(title){
                                    function(m ,i){return m.title != title});
 }
 
+
 // Populate table with data from ZMR server
 // Also filter user input
 z_populate_zmm_table();
@@ -76,8 +109,8 @@ z_filter_zmm_table();
 // CALLBACKS / EVENT LISTENERS
 //attach event to the refresh button
 $("button#zmm_refresh_btn").live('click', function(e){
-    z_refresh_zmm();
     e.preventDefault();
+    z_refresh_zmm();
 });
 
 
@@ -107,12 +140,18 @@ $(".z_module_link").live('click', function(e){
 
 $("#zmm_install_btn").live('click', function(e){
     modules = '<ol id="zmm_to_install">';
-    $.each(Window.zmm.to_install, function(i, m){ modules = modules +  '<li>' + m.title + '</li>'});
+    $.each(Window.zmm.to_install, function(i, m){ 
+	modules = modules +  '<li>' + m.title + '</li>'
+    });
     install_confirm_text = '<h3>These modules will be installed: </h3> <br />' + modules + "</ol>";
     z_dialog_confirm({
         text: install_confirm_text,
         on_confirm: function(){
-            $.each(Window.zmm.to_install, function(index, module){z_install_module(module)})
+            $.each(Window.zmm.to_install, function(index, module){
+		z_install_module(module)
+	    })
     }})
    e.preventDefault();
 });
+
+
