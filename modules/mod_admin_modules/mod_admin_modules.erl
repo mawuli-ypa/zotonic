@@ -92,7 +92,7 @@ observe_admin_menu(admin_menu, Acc, Context) ->
      
      |Acc].
 
-
+%% @doc Postback handler for 'install-module' event
 event(#postback_notify{message="install-module"}, Context) ->
     Module = z_context:get_q("module", Context),
     case z_module_manager:install(Module, Context) of
