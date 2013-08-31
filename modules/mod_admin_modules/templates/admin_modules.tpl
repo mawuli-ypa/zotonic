@@ -31,18 +31,33 @@ action={dialog_open title="Zotonic Module Repository" template="action_dialog_zm
                 <td>{{ props.mod_description|default:"-" }}</td>
                 <td>{{ prio }}</td>
                 <td>
-                    <div class="pull-right">
+                   <div class="pull-right">
+		   <div class="dropdown">
+       		   <button class="btn dropdown-toggle" role="button" data-toggle="dropdown" data-target="#">
+		       Actions <b class="caret"></b>
+	            </button>
+		       <ul class="dropdown-menu pull-right" role="menu" aria-labelledby="dLabel">
                         {% if props.is_active %}
-                        {% button text=_"Deactivate"
-                           class="btn btn-mini"
-                           action={module_toggle module=module status_id=#status.module}
-                           action={toggle_class id=#li.module class="enabled"} %}
+			   {% wire id=deactivate-#id.module action={module_toggle module=module status_id=#status.module} 
+			      	    action={toggle_class id=#li.module class="enabled"} %}
+			  <li id=deactivate-{{ #id.module }}><a tabindex="-1" href="#"> Deactivate </a></li>
                         {% else %}
-                        {% button text=_"Activate"
-                           class="btn btn-mini btn-success"
-                           action={module_toggle module=module status_id=#status.module} 
+			{% wire id=activate-#id.module action={module_toggle module=module status_id=#status.module} 
                            action={toggle_class id=#li.module class="enabled"} %}
+                          <li id=activate-{{ #id.module }}><a tabindex="-1" href="#"> Activate </a></li>
                         {% endif %}
+
+			   {% wire id=update-#id.module action={module_update module=module} %}
+		           <li><a id=update-{{ #id.module }} tabindex="-1" href="#">Update</a></li>
+
+			   {% wire id=reinstall-#id.module action={module_reinstall module=module} %}
+		           <li><a id=reinstall-{{ #id.module }} tabindex="-1" href="#">Reinstall</a></li>
+
+			   <li class="divider"></li>
+			   {% wire id=uninstall-#id.module action={module_uninstall module=module} %}
+			   <li><a id=uninstall-{{ #id.module }} tabindex="-1" href="#">Uninstall</a></li>
+		        </ul>
+			</div>
                     </div>
 
                     {{ props.author|escape|default:"-" }}
