@@ -785,17 +785,24 @@ reinstall(Module, Context) ->
             ok = z_db:flush(Context)
     end.
 
+%% @doc Return path to the Zotonic module
+%% relative to the given site's install path
+%% @spec build_module_path(iolist(), iolist()) -> iolist()
+build_module_path(Module, Site)->
+    Site2 = erlang:atom_to_list(Site),
+    PrivDir = z_utils:lib_dir(priv),
+    SiteModulesDir = filename:join([PrivDir, "sites", Site2, "modules"]),
+    ModulePath = filename:join([SiteModulesDir, Module]),
+    ModulePath.
+
 
 %% @doc Install a Zotonic module in current site modules directory
 %% @spec install(list(), #context{}) ->
 %%   {error, {already_ecists, list()}} | {ok, list()} | {error, list()}
 install(Module, Context) ->
-    Site = erlang:atom_to_list(m_site:get(host, Context)),
-    PrivDir = z_utils:lib_dir(priv),
-    SiteModulesDir = filename:join([PrivDir, "sites", Site, "modules"]),
-    %% @TODO: use platform-independent path separator
-    ModuleDirname = SiteModulesDir ++ "/" ++ Module,
-    case filelib:is_file(ModuleDirname) of
+    Site = m_site:get(host, Context),
+    ModulePath = build_module_path(Module, Site),
+    case filelib:is_file(ModulePath) of
         true ->
             {error, {already_exists, Module}};
         false ->
@@ -814,7 +821,9 @@ exec_zmm(Cmd) ->
 	
 cmd(Cmd, Timeout) ->
     Port = erlang:open_port({spawn, Cmd},[exit_status]),
-    loop(Port,[], Timeout).
+    loop(Port,[], Timeout),
+    erlang:port_close(Port). 
+    
 	
 loop(Port, Data, Timeout) ->
     receive
@@ -828,3 +837,29 @@ loop(Port, Data, Timeout) ->
 	    throw(timeout)
     end.
 
+%% @doc Recursively delete directory
+%% @spec del_dir(iolist()) -> ok
+del_dir(Path) ->
+    case file:del_dir(Path) of
+        {error, eexist} ->
+            ok = del_files(Path),
+            ok = file:del_dir(Path);
+        ok ->
+            ok
+    end.
+
+del_files(Path) ->
+    {ok, Files} = file:list_dir(Path),
+    ok = del_files(Path, Files).
+
+del_files(_EmptyDir, []) ->
+    ok;
+del_files(Dir, [Filename | Rest]) ->
+    Path = filename:join([Dir, Filename]),
+    case filelib:is_dir(Path) of
+        true ->
+            ok = del_dir(Path);
+        false ->
+            ok = file:delete(Path)
+    end,
+    del_files(Dir, Rest).
