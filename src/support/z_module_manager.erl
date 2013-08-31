@@ -55,8 +55,9 @@
     add_observers/3,
     remove_observers/3,
     reinstall/2,
-    install/2,
-    exec_zmm/1
+    install/2,	
+    exec_zmm/1,
+    update/2
 ]).
 
 -include_lib("zotonic.hrl").
@@ -785,6 +786,7 @@ reinstall(Module, Context) ->
             ok = z_db:flush(Context)
     end.
 
+
 %% @doc Return path to the Zotonic module
 %% relative to the given site's install path
 %% @spec build_module_path(iolist(), iolist()) -> iolist()
@@ -863,3 +865,13 @@ del_files(Dir, [Filename | Rest]) ->
             ok = file:delete(Path)
     end,
     del_files(Dir, Rest).
+
+
+%% @doc Update a Zotonic module in current site modules directory
+%% @spec install(list(), #context{}) -> {ok, list()}
+update(Module, Context) ->
+    Site = m_site:get(host, Context),
+    ZMM = filename:join(['bin', 'zmm']),
+    CMD = ZMM ++ " update " ++ Module ++ " -s " ++ Site,
+    erlang:spawn(z_module_manager, exec_zmm, [CMD]),
+    {ok, Module}.
