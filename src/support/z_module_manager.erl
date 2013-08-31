@@ -57,7 +57,8 @@
     reinstall/2,
     install/2,	
     exec_zmm/1,
-    update/2
+    update/2,
+    uninstall/2
 ]).
 
 -include_lib("zotonic.hrl").
@@ -875,3 +876,26 @@ update(Module, Context) ->
     CMD = ZMM ++ " update " ++ Module ++ " -s " ++ Site,
     erlang:spawn(z_module_manager, exec_zmm, [CMD]),
     {ok, Module}.
+
+
+%% @doc Deactivate and delete a Zotonic module
+%% in the current site's mdoules directory
+%% @spec uninstall(list(), #context{}) -> {ok, list()} | {error, list()}
+uninstall(Module, Context) ->
+    Site = m_site:get(host, Context),
+    ModulePath = build_module_path(Module, Site),
+    case filelib:is_dir(ModulePath) of
+        true ->
+	    case z_module_manager:whereis(Module, Context) of
+		{ok, _Pid} ->
+		    z_module_manager:deactivate(Module, Context);
+		{error, not_running} ->
+		    none
+	    end,
+	%% delete module directory
+	del_dir(ModulePath),
+	%% update Zotonic
+	zotonic:update();
+        false ->
+	    {error, {not_found, Module}}
+     end.
