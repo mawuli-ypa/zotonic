@@ -792,9 +792,8 @@ reinstall(Module, Context) ->
 %% relative to the given site's install path
 %% @spec build_module_path(iolist(), iolist()) -> iolist()
 build_module_path(Module, Site)->
-    Site2 = erlang:atom_to_list(Site),
     PrivDir = z_utils:lib_dir(priv),
-    SiteModulesDir = filename:join([PrivDir, "sites", Site2, "modules"]),
+    SiteModulesDir = filename:join([PrivDir, "sites", Site, "modules"]),
     ModulePath = filename:join([SiteModulesDir, Module]),
     ModulePath.
 
@@ -803,13 +802,13 @@ build_module_path(Module, Site)->
 %% @spec install(list(), #context{}) ->
 %%   {error, {already_ecists, list()}} | {ok, list()} | {error, list()}
 install(Module, Context) ->
-    Site = m_site:get(host, Context),
+    Site = atom_to_list(m_site:get(host, Context)),
     ModulePath = build_module_path(Module, Site),
     case filelib:is_file(ModulePath) of
         true ->
             {error, {already_exists, Module}};
         false ->
-            ZMM = filename:join(['bin', 'zmm']),
+            ZMM = filename:join(["bin", "zmm"]),
             CMD = ZMM ++ " install " ++ Module ++ " -s " ++ Site,
             erlang:spawn(z_module_manager, exec_zmm, [CMD]),
 	    {ok, Module}
@@ -824,8 +823,7 @@ exec_zmm(Cmd) ->
 	
 cmd(Cmd, Timeout) ->
     Port = erlang:open_port({spawn, Cmd},[exit_status]),
-    loop(Port,[], Timeout),
-    erlang:port_close(Port). 
+    loop(Port,[], Timeout).
     
 	
 loop(Port, Data, Timeout) ->
