@@ -869,10 +869,10 @@ del_files(Dir, [Filename | Rest]) ->
 %% @doc Update a Zotonic module in current site modules directory
 %% @spec install(list(), #context{}) -> {ok, list()}
 update(Module, Context) ->
-    Site = m_site:get(host, Context),
-    ZMM = filename:join(['bin', 'zmm']),
-    CMD = ZMM ++ " update " ++ Module ++ " -s " ++ Site,
-    erlang:spawn(z_module_manager, exec_zmm, [CMD]),
+    Site = atom_to_list(m_site:get(host, Context)),
+    ZMM = filename:join(["bin", "zmm"]),
+    Cmd = ZMM ++ " update " ++ Module ++ " -s " ++ Site,
+    spawn(z_module_manager, exec_zmm, [Cmd]),
     {ok, Module}.
 
 
@@ -880,7 +880,7 @@ update(Module, Context) ->
 %% in the current site's mdoules directory
 %% @spec uninstall(list(), #context{}) -> {ok, list()} | {error, list()}
 uninstall(Module, Context) ->
-    Site = m_site:get(host, Context),
+    Site = atom_to_list(m_site:get(host, Context)),
     ModulePath = build_module_path(Module, Site),
     case filelib:is_dir(ModulePath) of
         true ->
@@ -888,12 +888,13 @@ uninstall(Module, Context) ->
 		{ok, _Pid} ->
 		    z_module_manager:deactivate(Module, Context);
 		{error, not_running} ->
-		    none
+		    not_running
 	    end,
 	%% delete module directory
 	del_dir(ModulePath),
 	%% update Zotonic
-	zotonic:update();
+	zotonic:update(),
+	ok;
         false ->
 	    {error, {not_found, Module}}
      end.
