@@ -38,14 +38,14 @@ render_action(TriggerId, TargetId, Args, Context) ->
 %% @doc 'module_reinstall' postback event handler
 %% @spec event(Event, Context1) -> Context2
 event(#postback{message={module_reinstall, Module}, trigger=_TriggerId}, Context) ->
+    Module1 = atom_to_list(Module),
     case z_acl:is_allowed(use, mod_admin_modules, Context) of
 	true ->
-	    Module = z_context:get_q("module", Context),
-	        case z_module_manager:reinstall(Module) of
+	        case z_module_manager:reinstall(Module, Context) of
 		    nop ->
-		        z_render:growl_error(?__("Failed to re-install" ++ Module, Context), Context);
-		    ok ->
-    	    	    	z_render:growl(Module ++ "reinstalled", Context)
+		        z_render:growl_error(?__("ERROR: manage schema not defined for " ++ Module1 , Context), Context);
+		    _HasSchema ->
+    	    	    	z_render:growl("Reinstalling " ++ Module1, Context)
 	        end;
       false ->
             z_render:growl_error("You are not allowed to reinstall modules.", Context)
