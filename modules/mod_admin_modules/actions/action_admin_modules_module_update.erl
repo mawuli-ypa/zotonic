@@ -38,14 +38,14 @@ render_action(TriggerId, TargetId, Args, Context) ->
 %% @doc Process 'module_update' event triggered on the clientside
 %% @spec event(Event, Context1) -> Context2
 event(#postback{message={module_update, Module}, trigger=_TriggerId}, Context) ->
+    Module1 = atom_to_list(Module),
     case z_acl:is_allowed(use, mod_admin_modules, Context) of
 	true ->
-	    Module = z_context:get_q("module", Context),
-	    case z_module_manager:update(Module, Context) of
+	    case z_module_manager:update(Module1, Context) of
 		{error, Module} ->
-		    z_render:growl_error(?__("Failed to update" ++ Module, Context), Context);
-		{ok, Module} ->
-		    z_render:growl("Updating " ++ Module, Context)
+		    z_render:growl_error(?__("Failed to update" ++ Module1, Context), Context);
+		{ok, Module1} ->
+		    z_render:growl("Updating " ++ Module1, Context)
 	    end;
       false ->
             z_render:growl_error("You are not allowed to update modules.", Context)
