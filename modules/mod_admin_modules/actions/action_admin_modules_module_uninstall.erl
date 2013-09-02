@@ -38,14 +38,15 @@ render_action(TriggerId, TargetId, Args, Context) ->
 %% @doc 'module_uninstall' postback event handler
 %% @spec event(Event, Context1) -> Context2
 event(#postback{message={module_uninstall, Module}, trigger=_TriggerId}, Context) ->
+    Module1 = atom_to_list(Module),
+    z_render:growl(?__("Uninstalling" ++ Module1, Context), Context),
     case z_acl:is_allowed(use, mod_admin_modules, Context) of
 	true ->
-	    Module = z_context:get_q("module", Context),
-	    case z_module_manager:uninstall(Module, Context) of
-		{error, Module} ->
-		    z_render:growl_error(?__("Failed to uninstall " ++ Module, Context), Context);
-		{ok, Module} ->
-		    z_render:growl_error(?__(Module ++ " uninstalled", Context), Context)
+	    case z_module_manager:uninstall(Module1, Context) of
+		{error, {not_found, Module}} ->
+		    z_render:growl_error(?__("ERROR: failed to uninstall " ++ Module1, Context), Context);
+		ok ->
+		    z_render:growl(?__(Module1 ++ " uninstalled", Context), Context)
 	    end;
       false ->
             z_render:growl_error("You are not allowed to uninstall modules.", Context)
