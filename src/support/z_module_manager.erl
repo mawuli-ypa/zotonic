@@ -809,7 +809,7 @@ install(Module, Context) ->
             {error, {already_exists, Module}};
         false ->
             ZMM = filename:join([os:getenv("ZOTONIC"),'bin', 'zmm']),
-            CMD = ZMM ++ " install " ++ Module ++ " -s " ++ Site,
+            CMD = ZMM ++ " install " ++ z_utils:os_escape(Module) ++ " -s " ++ z_utils:os_escape(Site),
             erlang:spawn(z_module_manager, exec_zmm, [CMD]),
 	    {ok, Module}
      end.
@@ -871,7 +871,7 @@ del_files(Dir, [Filename | Rest]) ->
 update(Module, Context) ->
     Site = atom_to_list(m_site:get(host, Context)),
     ZMM = filename:join([os:getenv("ZOTONIC"),'bin', 'zmm']),
-    Cmd = ZMM ++ " update " ++ Module ++ " -s " ++ Site,
+    Cmd = ZMM ++ " update " ++ z_utils:os_escape(Module) ++ " -s " ++ z_utils:os_escape(Site),
     spawn(z_module_manager, exec_zmm, [Cmd]),
     {ok, Module}.
 
