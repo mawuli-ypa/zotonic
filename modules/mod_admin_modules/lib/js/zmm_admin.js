@@ -121,6 +121,8 @@ $("button#zmm_refresh_btn").live('click', function(e){
 
 
 $(".z_module_link").live('click', function(e){
+    e.preventDefault();
+    if(!$(this).hasClass("zmm-installed")){
     // mark module for installation
     $(this).toggleClass('to_install');
     
@@ -139,8 +141,11 @@ $(".z_module_link").live('click', function(e){
 
     // add module to list of modules to install
     z_zmm_queue_install(module);
-    e.preventDefault();
-
+    }
+    else{
+	module_name = $(this).attr('data-id');
+	z_growl_add(module_name + " is already installed");
+    }
 });
 
 
