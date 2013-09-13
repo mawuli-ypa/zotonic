@@ -10,7 +10,7 @@
 #zmm_tbl_body tr.to_install {background-color: #E5C37E !important;}
 ol#zmm_to_install{padding: 3px; list-style: decimal !important}
 .zmm-installed {background-color: #60b044}
-
+#zmm_tbl_body tr:hover td{ background-color: #ddd !important} 
 div#zmm-green-box {width:10px; height: 3px; background-color: #60b044 !important; 
 display: inline;padding:5px; margin-right: 5px; color: #fff}
 
