@@ -1,7 +1,7 @@
 %% @author Mawuli Adzaku <mawuli@mauwli.me>
 %% @copyright 2013, Mawuli Adzaku
 %% @date 2013-09-8
-%% @doc List all installed modules
+%% @doc List all installed modules from the Zotonic Modules Repository 
 
 %% Copyright 2013 Mawuli Adzaku
 %% 
@@ -28,7 +28,11 @@
 -include_lib("zotonic.hrl").
 
 process_get(_ReqData, Context) ->
-    Modules = lists:map(fun({Module, _ModulePath})-> Module end,
-			z_module_manager:scan(Context)),
-    z_convert:to_json(Modules).
+    Sites = z_sites_manager:get_sites(),
+    Modules = lists:filter(fun({_Module, ModulePath}) ->
+				   z_string:contains("priv", ModulePath) end,
+			   z_module_manager:scan(Context)),
+    Modules1 = lists:filter(fun(Module) -> lists:member(Module, Sites) =:= false end,
+			    lists:map(fun({Module, _ModulePath}) -> Module end, Modules)),
+    z_convert:to_json(Modules1).
 
