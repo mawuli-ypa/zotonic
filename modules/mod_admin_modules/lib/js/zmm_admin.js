@@ -38,7 +38,7 @@ function z_paginate_table(){
     }
     pager.empty();
     page_ul.appendTo(pager);
-    pager.find('#zmm_tbl div.pagination ul li:first')
+    pager.find('ul li:first')
 	  .addClass('active');
 };
 
