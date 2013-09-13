@@ -68,15 +68,15 @@ function z_filter_zmm_table(){
     $('input#zmm_filter').live('keyup', function() {
     var val = $(this).val();
     var rex = new RegExp(val, 'i');
-    $('#zmm_tbl tr').hide();
+    $('#zmm_tbl tr:gt(0)').hide();
         $('#zmm_tbl tr').filter(function() {
             return rex.test($(this).text());
         }).show();
     // repaginate if the filter input is empty
     if(val.length == 0){
         $("#zmm_tbl").trigger('repaginate');
-    }
-    });
+       }
+   });
 }
 
 
