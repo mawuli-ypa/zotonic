@@ -56,7 +56,7 @@
     remove_observers/3,
     reinstall/2,
     install/2,	
-    exec_zmm/1,
+    exec_zmm/3,
     update/2,
     uninstall/2
 ]).
@@ -789,41 +789,56 @@ reinstall(Module, Context) ->
 
 
 %% @doc Return path to the Zotonic module
-%% relative to the given site's install path
+%% relative to the global install path
 %% @spec build_module_path(iolist(), iolist()) -> iolist()
-build_module_path(Module, Site)->
+build_module_path(Module)->
     PrivDir = z_utils:lib_dir(priv),
-    SiteModulesDir = filename:join([PrivDir, "sites", Site, "modules"]),
-    ModulePath = filename:join([SiteModulesDir, Module]),
+    ModulePath = filename:join([PrivDir, "modules", Module]),
     ModulePath.
 
 
-%% @doc Install a Zotonic module in current site modules directory
+%% @doc Install a Zotonic module in the priv/modules directory
 %% @spec install(list(), #context{}) ->
 %%   {error, {already_ecists, list()}} | {ok, list()} | {error, list()}
 install(Module, Context) ->
-    Site = atom_to_list(m_site:get(host, Context)),
-    ModulePath = build_module_path(Module, Site),
+    ModulePath = build_module_path(Module),
     case filelib:is_file(ModulePath) of
         true ->
             {error, {already_exists, Module}};
         false ->
-            ZMM = filename:join([os:getenv("ZOTONIC"),'bin', 'zmm']),
-            CMD = ZMM ++ " install " ++ z_utils:os_escape(Module) ++ " -s " ++ z_utils:os_escape(Site),
-            erlang:spawn(z_module_manager, exec_zmm, [CMD]),
+            Arg = z_utils:os_escape(Module),
+            erlang:spawn(z_module_manager, exec_zmm, [install, Arg, Context]),
 	    {ok, Module}
      end.
 	    	
+%% @doc Return path to the module manager script
+get_path_to_zmm() ->
+    filename:join([os:getenv("ZOTONIC"),'bin', 'zmm']).
 
 %% @doc Execute external shell command.
 %% Command is run in a separate process/space.
-%% @spec exec_zmm(iolist())-> iolist() | throw
-exec_zmm(Cmd) ->
-    cmd(Cmd, 30000).
+-spec exec_zmm(Action, Arg, Context) -> Result when
+    Action :: atom(),
+    Arg :: string(),
+    Context :: #context{},
+    Result :: ok
+           | {error, timeout}.
+exec_zmm(install, Arg, Context) when is_list(Arg) ->
+    Cmd = get_path_to_zmm() ++ " install " ++ Arg,
+    cmd(Cmd, 30000, Context);
+exec_zmm(update, Arg, Context) ->
+    Cmd = get_path_to_zmm() ++ " update " ++ Arg,
+    cmd(Cmd, 30000, Context).
 	
-cmd(Cmd, Timeout) ->
+cmd(Cmd, Timeout, _Context) ->
     Port = erlang:open_port({spawn, Cmd},[exit_status]),
-    loop(Port,[], Timeout).
+    try loop(Port,[], Timeout) of
+       {done, _Data} ->	    
+           ok
+    catch
+       throw:timeout ->
+	    {error, timeout}
+    end.
     
 	
 loop(Port, Data, Timeout) ->
@@ -869,19 +884,15 @@ del_files(Dir, [Filename | Rest]) ->
 %% @doc Update a Zotonic module in current site modules directory
 %% @spec install(list(), #context{}) -> {ok, list()}
 update(Module, Context) ->
-    Site = atom_to_list(m_site:get(host, Context)),
-    ZMM = filename:join([os:getenv("ZOTONIC"),'bin', 'zmm']),
-    Cmd = ZMM ++ " update " ++ z_utils:os_escape(Module) ++ " -s " ++ z_utils:os_escape(Site),
-    spawn(z_module_manager, exec_zmm, [Cmd]),
+    Arg = z_utils:os_escape(Module),
+    spawn(z_module_manager, exec_zmm, [update, Arg, Context]),
     {ok, Module}.
 
 
-%% @doc Deactivate and delete a Zotonic module
-%% in the current site's mdoules directory
+%% @doc Deactivate and delete module from the priv/modules directory
 %% @spec uninstall(list(), #context{}) -> {ok, list()} | {error, list()}
 uninstall(Module, Context) ->
-    Site = atom_to_list(m_site:get(host, Context)),
-    ModulePath = build_module_path(Module, Site),
+    ModulePath = build_module_path(Module),
     case filelib:is_dir(ModulePath) of
         true ->
 	    case z_module_manager:whereis(Module, Context) of
