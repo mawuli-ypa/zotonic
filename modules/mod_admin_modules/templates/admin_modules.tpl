@@ -32,6 +32,7 @@ action={dialog_open title="Zotonic Module Repository" template="action_dialog_zm
                 <td>{{ prio }}</td>
                 <td>
                    <div class="pull-right">
+		  {% if props.path|match:"priv/modules" %}
 		   <div class="dropdown">
        		   <button class="btn dropdown-toggle" role="button" data-toggle="dropdown" data-target="#">
 		       Actions <b class="caret"></b>
@@ -60,6 +61,19 @@ action={dialog_open title="Zotonic Module Repository" template="action_dialog_zm
 			{% endwith %}
 		        </ul>
 			</div>
+		  {% else %}
+                        {% if props.is_active %}
+                        {% button text=_"Deactivate"
+                           class="btn btn-mini"
+                           action={module_toggle module=module status_id=#status.module}
+                           action={toggle_class id=#li.module class="enabled"} %}
+                        {% else %}
+                        {% button text=_"Activate"
+                           class="btn btn-mini btn-success"
+                           action={module_toggle module=module status_id=#status.module} 
+                           action={toggle_class id=#li.module class="enabled"} %}
+                        {% endif %}		  
+		  {% endif %}
                     </div>
 
                     {{ props.author|escape|default:"-" }}
