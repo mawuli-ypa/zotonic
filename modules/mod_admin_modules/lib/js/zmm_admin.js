@@ -150,6 +150,7 @@ $(".z_module_link").live('click', function(e){
 
 
 $("#zmm_install_btn").live('click', function(e){
+    e.preventDefault();
     modules = '<ol id="zmm_to_install">';
     $.each(window.zmm.to_install, function(i, m){ 
 	modules = modules +  '<li>' + m.title + '</li>'
@@ -162,5 +163,5 @@ $("#zmm_install_btn").live('click', function(e){
 		z_install_module(module)
 	    })
     }})
-   e.preventDefault();
 });
+
