@@ -32,7 +32,7 @@ action={dialog_open title="Zotonic Module Repository" template="action_dialog_zm
                 <td>{{ prio }}</td>
                 <td>
                    <div class="pull-right">
-		  {% if props.path|match:"priv/modules" %}
+		  {% if props.path|match:"priv/modules" or props.path|match:"priv/sites/" %}
 		   <div class="dropdown">
        		   <button class="btn dropdown-toggle" role="button" data-toggle="dropdown" data-target="#">
 		       Actions <b class="caret"></b>
