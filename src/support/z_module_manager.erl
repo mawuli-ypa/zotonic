@@ -789,19 +789,30 @@ reinstall(Module, Context) ->
 
 
 %% @doc Return path to the Zotonic module
-%% relative to the global install path
-%% @spec build_module_path(iolist(), iolist()) -> iolist()
-build_module_path(Module)->
-    PrivDir = z_utils:lib_dir(priv),
-    ModulePath = filename:join([PrivDir, "modules", Module]),
-    ModulePath.
+-spec build_module_path(Module, #context{}) -> ModulePath when
+      Module :: string(),
+      ModulePath :: string().						   
+build_module_path(Module, Context)->
+    SiteDir = z_path:site_dir(Context),
+    SiteModulePath = filename:join([SiteDir, "modules", Module]),
+    case filelib:is_dir(SiteModulePath) of 
+        true ->
+            SiteModulePath;
+        false -> 
+	    PrivDir = z_utils:lib_dir(priv),
+	    ModulePath = filename:join([PrivDir, "modules", Module]),
+            ModulePath
+    end.
 
 
 %% @doc Install a Zotonic module in the priv/modules directory
-%% @spec install(list(), #context{}) ->
-%%   {error, {already_ecists, list()}} | {ok, list()} | {error, list()}
+-spec install(Module, Context) -> Result when
+       Module :: string(),
+       Context :: #context{},      
+       Result :: {error, {already_ecists, list()}}
+	         | {ok, list()} | {error, list()}.
 install(Module, Context) ->
-    ModulePath = build_module_path(Module),
+    ModulePath = build_module_path(Module, Context),
     case filelib:is_file(ModulePath) of
         true ->
             {error, {already_exists, Module}};
@@ -812,24 +823,30 @@ install(Module, Context) ->
      end.
 	    	
 %% @doc Return path to the module manager script
+-spec get_path_to_zmm() -> Path when
+      Path :: string().
 get_path_to_zmm() ->
     filename:join([os:getenv("ZOTONIC"),'bin', 'zmm']).
 
 %% @doc Execute external shell command.
 %% Command is run in a separate process/space.
 -spec exec_zmm(Action, Arg, Context) -> Result when
-    Action :: atom(),
+    Action :: update | install,
     Arg :: string(),
     Context :: #context{},
-    Result :: ok
-           | {error, timeout}.
+    Result :: ok | {error, timeout}.
 exec_zmm(install, Arg, Context) when is_list(Arg) ->
     Cmd = get_path_to_zmm() ++ " install " ++ Arg,
     cmd(Cmd, 30000, Context);
 exec_zmm(update, Arg, Context) ->
     Cmd = get_path_to_zmm() ++ " update " ++ Arg,
     cmd(Cmd, 30000, Context).
-	
+
+%% @doc Run a shell command
+-spec cmd(Cmd, Timeout, _Context) -> Result when
+      Cmd :: string(),
+      Timeout :: integer(),
+      Result :: ok | {error, timeout}.
 cmd(Cmd, Timeout, _Context) ->
     Port = erlang:open_port({spawn, Cmd},[exit_status]),
     try loop(Port,[], Timeout) of
@@ -840,7 +857,12 @@ cmd(Cmd, Timeout, _Context) ->
 	    {error, timeout}
     end.
     
-	
+%% @doc Interacts with the Erlang opened for calling the ZMM CLI 	
+-spec loop(Port, Data, Timeout) -> Result when
+      Port :: port(),
+      Data :: list(),
+      Timeout :: integer(),
+      Result :: {done, Data} | throw.
 loop(Port, Data, Timeout) ->
     receive
 	{Port, {data, NewData}} ->
@@ -854,7 +876,8 @@ loop(Port, Data, Timeout) ->
     end.
 
 %% @doc Recursively delete directory
-%% @spec del_dir(iolist()) -> ok
+-spec del_dir(Path) -> ok when
+      Path :: string().
 del_dir(Path) ->
     case file:del_dir(Path) of
         {error, eexist} ->
@@ -881,8 +904,12 @@ del_files(Dir, [Filename | Rest]) ->
     del_files(Dir, Rest).
 
 
-%% @doc Update a Zotonic module in current site modules directory
-%% @spec install(list(), #context{}) -> {ok, list()}
+%% @doc Update a Zotonic module by pulling the latest changes from the
+%%    module's remote repostory
+-spec update(Module, Context) -> Result when
+      Module :: string(),
+      Context :: #context{},
+      Result :: {ok, list()}.
 update(Module, Context) ->
     Arg = z_utils:os_escape(Module),
     spawn(z_module_manager, exec_zmm, [update, Arg, Context]),
@@ -890,9 +917,12 @@ update(Module, Context) ->
 
 
 %% @doc Deactivate and delete module from the priv/modules directory
-%% @spec uninstall(list(), #context{}) -> {ok, list()} | {error, list()}
+-spec uninstall(Module, Context) -> Result when
+      Module :: string(),
+      Context :: #context{},
+      Result :: {ok, list()} | {error, list()}.
 uninstall(Module, Context) ->
-    ModulePath = build_module_path(Module),
+    ModulePath = build_module_path(Module, Context),
     case filelib:is_dir(ModulePath) of
         true ->
 	    case z_module_manager:whereis(Module, Context) of
@@ -901,7 +931,7 @@ uninstall(Module, Context) ->
 		{error, not_running} ->
 		    not_running
 	    end,
-	%% delete module directory
+	%% delete the module's directory
 	del_dir(ModulePath),
 	%% update Zotonic
 	zotonic:update(),
