@@ -15,7 +15,7 @@ div#zmm-green-box {width:10px; height: 3px; background-color: #60b044 !important
 display: inline;padding:5px; margin-right: 5px; color: #fff}
 div#zmm_tbl_pager a{cursor: pointer}
 
-
+tr.unpublished ul.dropdown-menu li a{color: #000 !important}
 
 
 

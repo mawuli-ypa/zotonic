@@ -90,4 +90,5 @@ action={dialog_open title="Zotonic Module Repository" template="action_dialog_zm
     </table>
 
 </div>
+{% lib "css/zmm_admin.css" %}
 {% endblock %}

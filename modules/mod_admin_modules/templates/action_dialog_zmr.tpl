@@ -23,7 +23,4 @@
 
 <div id="zmm_tbl_pager"  class="pagination pagination-centered"></div>
 
-
-
-{% lib "css/zmm_admin.css" %}
 {% lib "js/zmm_admin.js" %}
