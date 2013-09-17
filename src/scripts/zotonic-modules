@@ -35,7 +35,7 @@ Commands:
   install            Install a module
   uninstall          Uninstall a module
   activate           Activate a module
-  deactiave          Deactiave a module
+  deactivate         Deactivate a module
   list               List all modules avaiable on the Zotonic Modules Repository
   search <query>     Search for a module
 """
