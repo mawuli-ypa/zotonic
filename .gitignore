@@ -23,14 +23,13 @@ zmm_*
 
 ebin/
 deps/
-
+doc/
 /src/erlydtl/erlydtl_parser.erl
 /src/tests/erlydtl/rendered_output/
-
 /priv/config
 /priv/erlang.config
 /priv/sites/*/config
-
+/priv/sites/
 /priv/log/
 /priv/sites/default/files/
 /priv/sites/*/files/dropbox/
